@@ -1,0 +1,66 @@
+{% extends 'recipes/base.html' %}
+{% block title %}{{ profile_user.username }} — FoodStash{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="profile-header">
+        <div class="profile-header__avatar">
+            {% if profile_user.avatar %}
+                <img src="{{ profile_user.avatar.url }}" alt="{{ profile_user.username }}">
+            {% else %}
+                <div class="avatar-placeholder">{{ profile_user.username|first|upper }}</div>
+            {% endif %}
+        </div>
+
+        <div class="profile-header__info">
+            <h1 class="profile-name">{{ profile_user.username }}</h1>
+            {% if profile_user.get_full_name %}
+                <p class="profile-fullname">{{ profile_user.get_full_name }}</p>
+            {% endif %}
+            <p class="profile-joined">На FoodStash с {{ profile_user.date_joined|date:"F Y" }}</p>
+
+            {% if profile_user.bio %}
+                <p class="profile-bio">{{ profile_user.bio }}</p>
+            {% endif %}
+
+            {% if is_own %}
+                <a href="{% url 'profile_edit' %}" class="btn btn--primary">Редактировать профиль</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="profile-stats">
+        <div class="profile-stat">
+            <div class="profile-stat__value">{{ recipes.count }}</div>
+            <div class="profile-stat__label">рецептов</div>
+        </div>
+    </div>
+
+    <h2 class="section__title" style="margin-top: 40px;">Рецепты пользователя</h2>
+
+    <div class="recipes-grid">
+        {% for recipe in recipes %}
+            <a href="/recipe/{{ recipe.slug }}/" class="recipe-card">
+                <div class="recipe-card__image">
+                    {% if recipe.image %}
+                        <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}">
+                    {% else %}
+                        <div class="recipe-card__placeholder">🍲</div>
+                    {% endif %}
+                </div>
+                <div class="recipe-card__body">
+                    <h3 class="recipe-card__title">{{ recipe.title }}</h3>
+                    <div class="recipe-card__meta">
+                        <span>⏱ {{ recipe.cooking_time }} мин</span>
+                        <span>👁 {{ recipe.views_count }}</span>
+                    </div>
+                </div>
+            </a>
+        {% empty %}
+            <p class="empty-text">
+                {% if is_own %}Ты пока не добавил ни одного рецепта.{% else %}У пользователя пока нет рецептов.{% endif %}
+            </p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

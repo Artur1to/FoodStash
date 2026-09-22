@@ -1,0 +1,204 @@
+{% extends 'recipes/base.html' %}
+{% block title %}{{ recipe.title }} — FoodStash{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- ХЛЕБНЫЕ КРОШКИ -->
+    <nav class="breadcrumbs">
+        <a href="/">Главная</a>
+        <span>/</span>
+        {% if recipe.category %}
+            <a href="/category/{{ recipe.category.slug }}/">{{ recipe.category.name }}</a>
+            <span>/</span>
+        {% endif %}
+        <span class="breadcrumbs__current">{{ recipe.title }}</span>
+    </nav>
+
+    <!-- ОСНОВНОЙ БЛОК -->
+    <div class="recipe-detail">
+
+        <!-- ЛЕВАЯ КОЛОНКА: ФОТО -->
+        <div class="recipe-detail__image">
+            {% if recipe.image %}
+                <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}">
+            {% else %}
+                <div class="recipe-detail__placeholder">🍲</div>
+            {% endif %}
+        </div>
+
+        <!-- ПРАВАЯ КОЛОНКА: ИНФО -->
+        <div class="recipe-detail__info">
+            <div class="recipe-detail__badges">
+                {% if recipe.category %}
+                    <span class="badge badge--category">{{ recipe.category.name }}</span>
+                {% endif %}
+                <span class="badge badge--difficulty">{{ recipe.get_difficulty_display }}</span>
+            </div>
+
+            <h1 class="recipe-detail__title">{{ recipe.title }}</h1>
+
+            {% if recipe.description %}
+                <p class="recipe-detail__desc">{{ recipe.description }}</p>
+            {% endif %}
+
+            <!-- МЕТА-ИНФО -->
+            <div class="recipe-meta">
+                <div class="recipe-meta__item">
+                    <div class="recipe-meta__icon">⏱</div>
+                    <div>
+                        <div class="recipe-meta__value">{{ recipe.cooking_time }} мин</div>
+                        <div class="recipe-meta__label">Время</div>
+                    </div>
+                </div>
+                <div class="recipe-meta__item">
+                    <div class="recipe-meta__icon">🍽</div>
+                    <div>
+                        <div class="recipe-meta__value">{{ recipe.servings }}</div>
+                        <div class="recipe-meta__label">Порций</div>
+                    </div>
+                </div>
+                <div class="recipe-meta__item">
+                    <div class="recipe-meta__icon">👁</div>
+                    <div>
+                        <div class="recipe-meta__value">{{ recipe.views_count }}</div>
+                        <div class="recipe-meta__label">Просмотров</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- АВТОР -->
+            <a href="{% url 'profile' recipe.author.username %}" class="recipe-author">
+                {% if recipe.author.avatar %}
+                    <img src="{{ recipe.author.avatar.url }}" alt="{{ recipe.author.username }}" class="recipe-author__avatar">
+                {% else %}
+                    <div class="recipe-author__avatar recipe-author__avatar--placeholder">
+                        {{ recipe.author.username|first|upper }}
+                    </div>
+                {% endif %}
+                <div>
+                    <div class="recipe-author__label">Автор рецепта</div>
+                    <div class="recipe-author__name">{{ recipe.author.username }}</div>
+                </div>
+            </a>
+
+            <!-- КНОПКИ -->
+            <div class="recipe-actions">
+                <button class="btn btn--primary" id="favoriteBtn" data-recipe="{{ recipe.id }}">
+                    {% if is_favorite %}❤️ В избранном{% else %}🤍 В избранное{% endif %}
+                </button>
+                <button class="btn btn--outline">Поделиться</button>
+            </div>
+
+            <p class="recipe-detail__date">Добавлено {{ recipe.created_at|date:"d F Y" }}</p>
+        </div>
+    </div>
+
+    <!-- ДВЕ КОЛОНКИ: ИНГРЕДИЕНТЫ + ШАГИ -->
+    <div class="recipe-body">
+
+        <!-- ИНГРЕДИЕНТЫ -->
+        <aside class="recipe-ingredients">
+            <h2 class="recipe-section-title">Ингредиенты</h2>
+            <div class="servings-control">
+                <span>Порций:</span>
+                <button type="button" class="servings-btn" data-action="minus">−</button>
+                <span class="servings-value" id="servingsValue">{{ recipe.servings }}</span>
+                <button type="button" class="servings-btn" data-action="plus">+</button>
+            </div>
+
+            <ul class="ingredients-list" id="ingredientsList" data-base-servings="{{ recipe.servings }}">
+                {% for ri in ingredients %}
+                    <li class="ingredients-list__item">
+                        <span class="ingredients-list__name">{{ ri.ingredient.name }}</span>
+                        <span class="ingredients-list__qty" data-qty="{{ ri.quantity }}">{{ ri.quantity }} {{ ri.ingredient.unit }}</span>
+                    </li>
+                {% empty %}
+                    <li class="empty-text">Ингредиенты не указаны</li>
+                {% endfor %}
+            </ul>
+        </aside>
+
+        <!-- ШАГИ -->
+        <div class="recipe-steps">
+            <h2 class="recipe-section-title">Приготовление</h2>
+            <div class="steps-list">
+                {% for step in recipe.steps.splitlines %}
+                    {% if step.strip %}
+                        <div class="step-item">
+                            <div class="step-item__num">{{ forloop.counter }}</div>
+                            <div class="step-item__text">{{ step }}</div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- КОММЕНТАРИИ -->
+    <section class="comments-section">
+        <h2 class="recipe-section-title">Комментарии ({{ comments.count }})</h2>
+
+        {% if user.is_authenticated %}
+            <form method="post" action="#" class="comment-form">
+                {% csrf_token %}
+                <textarea name="content" placeholder="Оставь свой отзыв о рецепте..." rows="3" class="form-input"></textarea>
+                <button type="submit" class="btn btn--primary" style="margin-top:12px;">Отправить</button>
+            </form>
+        {% else %}
+            <p class="empty-text">Войди, чтобы оставить комментарий</p>
+        {% endif %}
+
+        <div class="comments-list">
+            {% for comment in comments %}
+                <div class="comment-item">
+                    <div class="comment-item__avatar">
+                        {% if comment.user.avatar %}
+                            <img src="{{ comment.user.avatar.url }}" alt="{{ comment.user.username }}">
+                        {% else %}
+                            <div class="comment-avatar-placeholder">{{ comment.user.username|first|upper }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="comment-item__body">
+                        <div class="comment-item__header">
+                            <span class="comment-item__name">{{ comment.user.username }}</span>
+                            <span class="comment-item__date">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        <p class="comment-item__text">{{ comment.content }}</p>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="empty-text">Пока нет комментариев. Будь первым!</p>
+            {% endfor %}
+        </div>
+    </section>
+
+</div>
+
+<script>
+// Калькулятор порций
+const servingsValue = document.getElementById('servingsValue');
+const ingredientsList = document.getElementById('ingredientsList');
+const baseServings = parseInt(ingredientsList.dataset.baseServings);
+let currentServings = baseServings;
+
+document.querySelectorAll('.servings-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        if (action === 'plus' && currentServings < 20) currentServings++;
+        if (action === 'minus' && currentServings > 1) currentServings--;
+
+        servingsValue.textContent = currentServings;
+
+        const ratio = currentServings / baseServings;
+        document.querySelectorAll('.ingredients-list__qty').forEach(el => {
+            const baseQty = parseFloat(el.dataset.qty);
+            const newQty = (baseQty * ratio).toFixed(1).replace(/\.0$/, '');
+            const unit = el.textContent.replace(/[\d.,\s]+/, '');
+            el.textContent = newQty + ' ' + unit;
+        });
+    });
+});
+</script>
+{% endblock %}

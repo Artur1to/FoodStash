@@ -1,0 +1,68 @@
+{% extends 'recipes/base.html' %}
+{% block title %}{{ category.name }} — FoodStash{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <nav class="breadcrumbs">
+        <a href="/">Главная</a>
+        <span>/</span>
+        <a href="{% url 'category_list' %}">Категории</a>
+        <span>/</span>
+        <span class="breadcrumbs__current">{{ category.name }}</span>
+    </nav>
+
+    <!-- ЗАГОЛОВОК КАТЕГОРИИ -->
+    <div class="category-header">
+        <div class="category-header__icon">{{ category.icon|default:"🍽️" }}</div>
+        <div>
+            <h1 class="category-header__title">{{ category.name }}</h1>
+            <p class="category-header__count">
+                {{ recipes.count }}
+                {% if recipes.count|divisibleby:10 and recipes.count != 11 and recipes.count != 12 and recipes.count != 13 and recipes.count != 14 %}
+                    рецептов
+                {% elif recipes.count == 1 %}
+                    рецепт
+                {% elif recipes.count >= 2 and recipes.count <= 4 %}
+                    рецепта
+                {% else %}
+                    рецептов
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- СЕТКА РЕЦЕПТОВ -->
+    {% if recipes %}
+        <div class="recipes-grid">
+            {% for recipe in recipes %}
+                <a href="{% url 'recipe_detail' recipe.slug %}" class="recipe-card">
+                    <div class="recipe-card__image">
+                        {% if recipe.image %}
+                            <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}">
+                        {% else %}
+                            <div class="recipe-card__placeholder">🍲</div>
+                        {% endif %}
+                    </div>
+                    <div class="recipe-card__body">
+                        <h3 class="recipe-card__title">{{ recipe.title }}</h3>
+                        <p class="recipe-card__desc">{{ recipe.description|truncatewords:12 }}</p>
+                        <div class="recipe-card__meta">
+                            <span>⏱ {{ recipe.cooking_time }} мин</span>
+                            <span>👤 {{ recipe.author.username }}</span>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state__icon">🍽️</div>
+            <h3 class="empty-state__title">В этой категории пока пусто</h3>
+            <p class="empty-state__text">Стань первым, кто добавит рецепт сюда!</p>
+            <a href="/recipe/add/" class="btn btn--primary">Добавить рецепт</a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

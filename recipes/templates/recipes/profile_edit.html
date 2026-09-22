@@ -1,0 +1,31 @@
+{% extends 'recipes/base.html' %}
+{% block title %}Редактирование профиля{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-page">
+        <div class="auth-card auth-card--wide">
+            <h1 class="auth-title">Редактировать профиль</h1>
+
+            <form method="post" enctype="multipart/form-data" class="auth-form">
+                {% csrf_token %}
+
+                {% for field in form %}
+                    <div class="form-group">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="form-error">{{ field.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary">Сохранить</button>
+                    <a href="{% url 'profile' user.username %}" class="btn btn--outline">Отмена</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

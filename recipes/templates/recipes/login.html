@@ -1,0 +1,34 @@
+{% extends 'recipes/base.html' %}
+{% block title %}Вход — FoodStash{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <h1 class="auth-title">Вход</h1>
+        <p class="auth-subtitle">Рады видеть снова</p>
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {% if form.errors %}
+                <div class="form-error">Неправильное имя пользователя или пароль</div>
+            {% endif %}
+
+            <div class="form-group">
+                <label class="form-label">Имя пользователя</label>
+                <input type="text" name="username" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Пароль</label>
+                <input type="password" name="password" class="form-input" required>
+            </div>
+
+            <button type="submit" class="btn btn--primary btn--full">Войти</button>
+        </form>
+
+        <p class="auth-switch">
+            Нет аккаунта? <a href="{% url 'register' %}">Зарегистрироваться</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
