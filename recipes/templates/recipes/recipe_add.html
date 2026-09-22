@@ -1,0 +1,167 @@
+{% extends 'recipes/base.html' %}
+{% block title %}Добавить рецепт — FoodStash{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <nav class="breadcrumbs">
+        <a href="/">Главная</a>
+        <span>/</span>
+        <span class="breadcrumbs__current">Добавить рецепт</span>
+    </nav>
+
+    <div class="page-header">
+        <h1 class="page-title">Новый рецепт</h1>
+        <p class="page-subtitle">Поделись своим рецептом с сообществом</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="recipe-form">
+        {% csrf_token %}
+
+        <div class="recipe-form__grid">
+
+            <!-- ЛЕВАЯ КОЛОНКА -->
+            <div class="recipe-form__col">
+
+                <h2 class="recipe-section-title">Основное</h2>
+
+                <div class="form-group">
+                    <label class="form-label">{{ form.title.label }}</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}<div class="form-error">{{ form.title.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">{{ form.description.label }}</label>
+                    {{ form.description }}
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">{{ form.category.label }}</label>
+                        {{ form.category }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">{{ form.difficulty.label }}</label>
+                        {{ form.difficulty }}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">{{ form.cooking_time.label }} (мин)</label>
+                        {{ form.cooking_time }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">{{ form.servings.label }}</label>
+                        {{ form.servings }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Фото блюда</label>
+                    {{ form.image }}
+                </div>
+
+            </div>
+
+            <!-- ПРАВАЯ КОЛОНКА -->
+            <div class="recipe-form__col">
+
+                <h2 class="recipe-section-title">Ингредиенты</h2>
+
+                {{ formset.management_form }}
+
+                <div id="ingredientsFormset">
+                    {% for ingredient_form in formset %}
+                        <div class="ingredient-row" data-form-index="{{ forloop.counter0 }}">
+                            {{ ingredient_form.id }}
+                            <div class="ingredient-row__inner">
+                                <div class="form-group ingredient-row__select">
+                                    <label class="form-label">Ингредиент</label>
+                                    {{ ingredient_form.ingredient }}
+                                </div>
+                                <div class="form-group ingredient-row__qty">
+                                    <label class="form-label">Кол-во</label>
+                                    {{ ingredient_form.quantity }}
+                                </div>
+                                <div class="ingredient-row__delete">
+                                    {% if ingredient_form.DELETE %}
+                                        <label class="checkbox-label">
+                                            {{ ingredient_form.DELETE }}
+                                            <span>Удалить</span>
+                                        </label>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if ingredient_form.errors %}
+                                <div class="form-error">{{ ingredient_form.errors }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <button type="button" class="btn btn--outline" id="addIngredientBtn" style="margin-top:12px;">
+                    + Добавить ингредиент
+                </button>
+
+                <p class="form-hint">Нет в списке? Добавь ингредиент через <a href="/admin/">админку</a>.</p>
+
+            </div>
+
+        </div>
+
+        <!-- ШАГИ ПРИГОТОВЛЕНИЯ -->
+        <div class="recipe-form__steps">
+            <h2 class="recipe-section-title">Приготовление</h2>
+            <div class="form-group">
+                <label class="form-label">{{ form.steps.label }}</label>
+                {{ form.steps }}
+                <p class="form-hint">Каждый шаг — с новой строки. Они автоматически пронумеруются.</p>
+                {% if form.steps.errors %}<div class="form-error">{{ form.steps.errors.0 }}</div>{% endif %}
+            </div>
+        </div>
+
+        <!-- КНОПКИ -->
+        <div class="recipe-form__actions">
+            <button type="submit" class="btn btn--primary btn--lg">Опубликовать рецепт</button>
+            <a href="/" class="btn btn--outline btn--lg">Отмена</a>
+        </div>
+
+    </form>
+
+</div>
+
+<!-- ШАБЛОН ДЛЯ НОВОЙ СТРОКИ ИНГРЕДИЕНТА (используется в JS) -->
+<template id="emptyIngredientRowTemplate">
+    <div class="ingredient-row">
+        <div class="ingredient-row__inner">
+            <div class="form-group ingredient-row__select">
+                <label class="form-label">Ингредиент</label>
+                {{ formset.empty_form.ingredient }}
+            </div>
+            <div class="form-group ingredient-row__qty">
+                <label class="form-label">Кол-во</label>
+                {{ formset.empty_form.quantity }}
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+const addBtn = document.getElementById('addIngredientBtn');
+const formsetContainer = document.getElementById('ingredientsFormset');
+const totalFormsInput = document.getElementById('id_ingredients-TOTAL_FORMS');
+const template = document.getElementById('emptyIngredientRowTemplate').innerHTML;
+
+addBtn.addEventListener('click', () => {
+    const currentCount = parseInt(totalFormsInput.value);
+    const newHtml = template.replace(/__prefix__/g, currentCount);
+    formsetContainer.insertAdjacentHTML('beforeend', newHtml);
+    totalFormsInput.value = currentCount + 1;
+});
+</script>
+
+{% endblock %}

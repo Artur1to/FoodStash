@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from .forms import RegisterForm, UserForm
-from .models import User, Recipe, Category, Favorite
-
+from django.forms import inlineformset_factory
+from .forms import RegisterForm, UserForm, RecipeForm, RecipeIngredientForm
+from .models import (
+    User, Category, Ingredient, Recipe,
+    RecipeIngredient, Favorite, Rating, Comment
+)
 
 def home(request):
     recipes = Recipe.objects.order_by('-created_at')[:8]
@@ -87,4 +90,38 @@ def category_detail(request, slug):
     return render(request, 'recipes/category_detail.html', {
         'category': category,
         'recipes': recipes,
+    })
+
+def recipe_add(request):
+    if not request.user.is_authenticated:
+        return redirect(f'/login/?next=/recipe/add/')
+
+    RecipeIngredientFormSet = inlineformset_factory(
+        Recipe,
+        RecipeIngredient,
+        form=RecipeIngredientForm,
+        extra=3,
+        can_delete=True,
+        min_num=1,
+        validate_min=True,
+    )
+
+    if request.method == 'POST':
+        form = RecipeForm(request.POST, request.FILES)
+        formset = RecipeIngredientFormSet(request.POST)
+
+        if form.is_valid() and formset.is_valid():
+            recipe = form.save(commit=False)
+            recipe.author = request.user
+            recipe.save()
+            formset.instance = recipe
+            formset.save()
+            return redirect('recipe_detail', slug=recipe.slug)
+    else:
+        form = RecipeForm()
+        formset = RecipeIngredientFormSet()
+
+    return render(request, 'recipes/recipe_add.html', {
+        'form': form,
+        'formset': formset,
     })

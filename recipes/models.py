@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from django.contrib.auth.models import AbstractUser
+from unidecode import unidecode
 
 
 class User(AbstractUser):
@@ -49,7 +50,16 @@ class Recipe(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.title)
+            base_slug = slugify(unidecode(self.title))
+            if not base_slug:
+                base_slug = 'recipe'
+            # Проверяем уникальность
+            slug = base_slug
+            counter = 1
+            while Recipe.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
         super().save(*args, **kwargs)
 
     def __str__(self):
