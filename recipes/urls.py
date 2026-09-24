@@ -14,6 +14,10 @@ urlpatterns = [
     path('profile/edit/', views.profile_edit, name='profile_edit'),
     path('profile/<str:username>/', views.profile_view, name='profile'),
 
+    path('recipe/<int:recipe_id>/favorite/', views.toggle_favorite, name='toggle_favorite'),
+    path('recipe/<int:recipe_id>/like/', views.toggle_like, name='toggle_like'),
+    path('recipe/<int:recipe_id>/comment/', views.add_comment, name='add_comment'),
+
     path('recipe/add/', views.recipe_add, name='recipe_add'),
     path('recipe/<slug:slug>/', views.recipe_detail, name='recipe_detail'),
 

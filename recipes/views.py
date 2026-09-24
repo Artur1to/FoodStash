@@ -1,11 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.forms import inlineformset_factory
 from .forms import RegisterForm, UserForm, RecipeForm, RecipeIngredientForm
 from .models import (
     User, Category, Ingredient, Recipe,
-    RecipeIngredient, Favorite, Rating, Comment
+    RecipeIngredient, Favorite, Rating, Comment, Like
 )
 
 def home(request):
@@ -35,13 +37,40 @@ def register_view(request):
 
 def profile_view(request, username):
     user_obj = get_object_or_404(User, username=username)
-    recipes = Recipe.objects.filter(author=user_obj).order_by('-created_at')
     is_own = request.user == user_obj
+
+    # Определяем активную вкладку
+    tab = request.GET.get('tab', 'recipes')
+    if tab not in ('recipes', 'likes', 'favorites'):
+        tab = 'recipes'
+
+    # Избранное — только для владельца
+    if tab == 'favorites' and not is_own:
+        tab = 'recipes'
+
+    # Загружаем данные в зависимости от вкладки
+    if tab == 'likes':
+        liked_ids = Like.objects.filter(user=user_obj).values_list('recipe_id', flat=True)
+        items = Recipe.objects.filter(id__in=liked_ids).order_by('-created_at')
+    elif tab == 'favorites':
+        fav_ids = Favorite.objects.filter(user=user_obj).values_list('recipe_id', flat=True)
+        items = Recipe.objects.filter(id__in=fav_ids).order_by('-created_at')
+    else:
+        items = Recipe.objects.filter(author=user_obj).order_by('-created_at')
+
+    # Счётчики для вкладок
+    counts = {
+        'recipes': Recipe.objects.filter(author=user_obj).count(),
+        'likes': Like.objects.filter(user=user_obj).count(),
+        'favorites': Favorite.objects.filter(user=user_obj).count(),
+    }
 
     return render(request, 'recipes/profile.html', {
         'profile_user': user_obj,
-        'recipes': recipes,
+        'items': items,
+        'tab': tab,
         'is_own': is_own,
+        'counts': counts,
     })
 
 
@@ -57,27 +86,80 @@ def profile_edit(request):
 
     return render(request, 'recipes/profile_edit.html', {'form': form})
 
+
 def recipe_detail(request, slug):
     recipe = get_object_or_404(Recipe, slug=slug)
 
-    # Увеличиваем счётчик просмотров
-    recipe.views_count += 1
-    recipe.save(update_fields=['views_count'])
+    # === УНИКАЛЬНЫЙ ПРОСМОТР (через сессию) ===
+    viewed = request.session.get('viewed_recipes', [])
+    if recipe.id not in viewed:
+        recipe.views_count += 1
+        recipe.save(update_fields=['views_count'])
+        viewed.append(recipe.id)
+        request.session['viewed_recipes'] = viewed
 
     ingredients = recipe.ingredients.select_related('ingredient').all()
     comments = recipe.comments.select_related('user').order_by('-created_at')
 
-    # Проверяем, в избранном ли у текущего пользователя
     is_favorite = False
+    is_liked = False
     if request.user.is_authenticated:
         is_favorite = Favorite.objects.filter(user=request.user, recipe=recipe).exists()
+        is_liked = Like.objects.filter(user=request.user, recipe=recipe).exists()
 
     return render(request, 'recipes/recipe_detail.html', {
         'recipe': recipe,
         'ingredients': ingredients,
         'comments': comments,
         'is_favorite': is_favorite,
+        'is_liked': is_liked,
+        'likes_count': recipe.likes.count(),
+        'comments_count': comments.count(),
     })
+
+
+@require_POST
+def toggle_favorite(request, recipe_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'auth_required'}, status=401)
+
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    fav, created = Favorite.objects.get_or_create(user=request.user, recipe=recipe)
+
+    if not created:
+        fav.delete()
+        return JsonResponse({'status': 'removed'})
+
+    return JsonResponse({'status': 'added'})
+
+
+@require_POST
+def toggle_like(request, recipe_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'auth_required'}, status=401)
+
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    like, created = Like.objects.get_or_create(user=request.user, recipe=recipe)
+
+    if not created:
+        like.delete()
+        return JsonResponse({'status': 'removed', 'count': recipe.likes.count()})
+
+    return JsonResponse({'status': 'added', 'count': recipe.likes.count()})
+
+
+@require_POST
+def add_comment(request, recipe_id):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    content = request.POST.get('content', '').strip()
+
+    if content:
+        Comment.objects.create(user=request.user, recipe=recipe, content=content)
+
+    return redirect('recipe_detail', slug=recipe.slug)
 
 def category_list(request):
     categories = Category.objects.all()

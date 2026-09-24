@@ -68,6 +68,7 @@
                         <p class="recipe-card__desc">{{ recipe.description|truncatewords:12 }}</p>
                         <div class="recipe-card__meta">
                             <span>⏱ {{ recipe.cooking_time }} мин</span>
+                            <span>❤️ {{ recipe.likes.count }}</span>
                             <span>👤 {{ recipe.author.username }}</span>
                         </div>
                     </div>

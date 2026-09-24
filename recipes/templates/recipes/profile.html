@@ -29,18 +29,25 @@
         </div>
     </div>
 
-    <div class="profile-stats">
-        <div class="profile-stat">
-            <div class="profile-stat__value">{{ recipes.count }}</div>
-            <div class="profile-stat__label">рецептов</div>
-        </div>
+    <!-- ВКЛАДКИ -->
+    <div class="profile-tabs">
+        <a href="?tab=recipes" class="profile-tab {% if tab == 'recipes' %}active{% endif %}">
+            Рецепты <span class="profile-tab__count">{{ counts.recipes }}</span>
+        </a>
+        <a href="?tab=likes" class="profile-tab {% if tab == 'likes' %}active{% endif %}">
+            Лайки <span class="profile-tab__count">{{ counts.likes }}</span>
+        </a>
+        {% if is_own %}
+            <a href="?tab=favorites" class="profile-tab {% if tab == 'favorites' %}active{% endif %}">
+                Избранное <span class="profile-tab__count">{{ counts.favorites }}</span>
+            </a>
+        {% endif %}
     </div>
 
-    <h2 class="section__title" style="margin-top: 40px;">Рецепты пользователя</h2>
-
+    <!-- СПИСОК РЕЦЕПТОВ -->
     <div class="recipes-grid">
-        {% for recipe in recipes %}
-            <a href="/recipe/{{ recipe.slug }}/" class="recipe-card">
+        {% for recipe in items %}
+            <a href="{% url 'recipe_detail' recipe.slug %}" class="recipe-card">
                 <div class="recipe-card__image">
                     {% if recipe.image %}
                         <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}">
@@ -50,17 +57,44 @@
                 </div>
                 <div class="recipe-card__body">
                     <h3 class="recipe-card__title">{{ recipe.title }}</h3>
+                    <p class="recipe-card__desc">{{ recipe.description|truncatewords:12 }}</p>
                     <div class="recipe-card__meta">
                         <span>⏱ {{ recipe.cooking_time }} мин</span>
-                        <span>👁 {{ recipe.views_count }}</span>
+                        <span>❤️ {{ recipe.likes.count }}</span>
                     </div>
                 </div>
             </a>
         {% empty %}
-            <p class="empty-text">
-                {% if is_own %}Ты пока не добавил ни одного рецепта.{% else %}У пользователя пока нет рецептов.{% endif %}
-            </p>
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <div class="empty-state__icon">
+                    {% if tab == 'likes' %}❤️{% elif tab == 'favorites' %}⭐{% else %}🍽️{% endif %}
+                </div>
+                <h3 class="empty-state__title">
+                    {% if tab == 'likes' %}
+                        Пока нет лайкнутых рецептов
+                    {% elif tab == 'favorites' %}
+                        Избранное пустое
+                    {% else %}
+                        Рецептов пока нет
+                    {% endif %}
+                </h3>
+                <p class="empty-state__text">
+                    {% if is_own %}
+                        {% if tab == 'likes' %}
+                            Лайкай рецепты, которые тебе понравились — они появятся здесь.
+                        {% elif tab == 'favorites' %}
+                            Добавляй рецепты в избранное — они появятся здесь.
+                        {% else %}
+                            Добавь свой первый рецепт!
+                        {% endif %}
+                    {% else %}
+                        Пользователь пока ничего не добавил.
+                    {% endif %}
+                </p>
+                {% if is_own and tab == 'recipes' %}
+                    <a href="{% url 'recipe_add' %}" class="btn btn--primary">Добавить рецепт</a>
+                {% endif %}
+            </div>
         {% endfor %}
     </div>
-</div>
 {% endblock %}

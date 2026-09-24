@@ -84,10 +84,19 @@
 
             <!-- КНОПКИ -->
             <div class="recipe-actions">
-                <button class="btn btn--primary" id="favoriteBtn" data-recipe="{{ recipe.id }}">
-                    {% if is_favorite %}❤️ В избранном{% else %}🤍 В избранное{% endif %}
+                <button class="btn btn--primary {% if is_liked %}btn--liked{% endif %}"
+                        id="likeBtn"
+                        data-url="{% url 'toggle_like' recipe.id %}">
+                    <span id="likeIcon">{% if is_liked %}❤️{% else %}🤍{% endif %}</span>
+                    <span id="likeCount">{{ likes_count }}</span>
                 </button>
-                <button class="btn btn--outline">Поделиться</button>
+
+                <button class="btn btn--outline {% if is_favorite %}btn--favorited{% endif %}"
+                        id="favBtn"
+                        data-url="{% url 'toggle_favorite' recipe.id %}">
+                    <span id="favIcon">{% if is_favorite %}⭐{% else %}☆{% endif %}</span>
+                    <span id="favText">{% if is_favorite %}В избранном{% else %}В избранное{% endif %}</span>
+                </button>
             </div>
 
             <p class="recipe-detail__date">Добавлено {{ recipe.created_at|date:"d F Y" }}</p>
@@ -138,16 +147,18 @@
 
     <!-- КОММЕНТАРИИ -->
     <section class="comments-section">
-        <h2 class="recipe-section-title">Комментарии ({{ comments.count }})</h2>
+        <h2 class="recipe-section-title">Комментарии ({{ comments_count }})</h2>
 
         {% if user.is_authenticated %}
-            <form method="post" action="#" class="comment-form">
+            <form method="post" action="{% url 'add_comment' recipe.id %}" class="comment-form">
                 {% csrf_token %}
-                <textarea name="content" placeholder="Оставь свой отзыв о рецепте..." rows="3" class="form-input"></textarea>
+                <textarea name="content" placeholder="Оставь свой отзыв о рецепте..." rows="3" class="form-input" required></textarea>
                 <button type="submit" class="btn btn--primary" style="margin-top:12px;">Отправить</button>
             </form>
         {% else %}
-            <p class="empty-text">Войди, чтобы оставить комментарий</p>
+            <p class="empty-text">
+                <a href="{% url 'login' %}?next={{ request.path }}">Войди</a>, чтобы оставить комментарий
+            </p>
         {% endif %}
 
         <div class="comments-list">
@@ -162,7 +173,7 @@
                     </div>
                     <div class="comment-item__body">
                         <div class="comment-item__header">
-                            <span class="comment-item__name">{{ comment.user.username }}</span>
+                            <a href="{% url 'profile' comment.user.username %}" class="comment-item__name">{{ comment.user.username }}</a>
                             <span class="comment-item__date">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
                         </div>
                         <p class="comment-item__text">{{ comment.content }}</p>
@@ -177,28 +188,98 @@
 </div>
 
 <script>
-// Калькулятор порций
+// === Калькулятор порций ===
 const servingsValue = document.getElementById('servingsValue');
 const ingredientsList = document.getElementById('ingredientsList');
-const baseServings = parseInt(ingredientsList.dataset.baseServings);
-let currentServings = baseServings;
+if (servingsValue && ingredientsList) {
+    const baseServings = parseInt(ingredientsList.dataset.baseServings);
+    let currentServings = baseServings;
 
-document.querySelectorAll('.servings-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const action = btn.dataset.action;
-        if (action === 'plus' && currentServings < 20) currentServings++;
-        if (action === 'minus' && currentServings > 1) currentServings--;
+    document.querySelectorAll('.servings-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const action = btn.dataset.action;
+            if (action === 'plus' && currentServings < 20) currentServings++;
+            if (action === 'minus' && currentServings > 1) currentServings--;
 
-        servingsValue.textContent = currentServings;
+            servingsValue.textContent = currentServings;
 
-        const ratio = currentServings / baseServings;
-        document.querySelectorAll('.ingredients-list__qty').forEach(el => {
-            const baseQty = parseFloat(el.dataset.qty);
-            const newQty = (baseQty * ratio).toFixed(1).replace(/\.0$/, '');
-            const unit = el.textContent.replace(/[\d.,\s]+/, '');
-            el.textContent = newQty + ' ' + unit;
+            const ratio = currentServings / baseServings;
+            document.querySelectorAll('.ingredients-list__qty').forEach(el => {
+                const baseQty = parseFloat(el.dataset.qty);
+                const newQty = (baseQty * ratio).toFixed(1).replace(/\.0$/, '');
+                const unit = el.textContent.replace(/[\d.,\s]+/, '');
+                el.textContent = newQty + ' ' + unit;
+            });
         });
     });
-});
+}
+
+// === CSRF для AJAX ===
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+// === Лайк ===
+const likeBtn = document.getElementById('likeBtn');
+if (likeBtn) {
+    likeBtn.addEventListener('click', async () => {
+        const url = likeBtn.dataset.url;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login/?next=' + window.location.pathname;
+            return;
+        }
+
+        const data = await response.json();
+        const icon = document.getElementById('likeIcon');
+        const count = document.getElementById('likeCount');
+
+        if (data.status === 'added') {
+            icon.textContent = '❤️';
+            likeBtn.classList.add('btn--liked');
+        } else {
+            icon.textContent = '🤍';
+            likeBtn.classList.remove('btn--liked');
+        }
+        count.textContent = data.count;
+    });
+}
+
+// === Избранное ===
+const favBtn = document.getElementById('favBtn');
+if (favBtn) {
+    favBtn.addEventListener('click', async () => {
+        const url = favBtn.dataset.url;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login/?next=' + window.location.pathname;
+            return;
+        }
+
+        const data = await response.json();
+        const icon = document.getElementById('favIcon');
+        const text = document.getElementById('favText');
+
+        if (data.status === 'added') {
+            icon.textContent = '⭐';
+            text.textContent = 'В избранном';
+            favBtn.classList.add('btn--favorited');
+        } else {
+            icon.textContent = '☆';
+            text.textContent = 'В избранное';
+            favBtn.classList.remove('btn--favorited');
+        }
+    });
+}
 </script>
 {% endblock %}
