@@ -4,10 +4,11 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.forms import inlineformset_factory
+from django.db.models import Count, Q
 from .forms import RegisterForm, UserForm, RecipeForm, RecipeIngredientForm
 from .models import (
     User, Category, Ingredient, Recipe,
-    RecipeIngredient, Favorite, Rating, Comment, Like
+    RecipeIngredient, Favorite, Rating, Comment, Like, CommentVote
 )
 
 def home(request):
@@ -90,7 +91,7 @@ def profile_edit(request):
 def recipe_detail(request, slug):
     recipe = get_object_or_404(Recipe, slug=slug)
 
-    # === УНИКАЛЬНЫЙ ПРОСМОТР (через сессию) ===
+    # Уникальный просмотр
     viewed = request.session.get('viewed_recipes', [])
     if recipe.id not in viewed:
         recipe.views_count += 1
@@ -99,7 +100,35 @@ def recipe_detail(request, slug):
         request.session['viewed_recipes'] = viewed
 
     ingredients = recipe.ingredients.select_related('ingredient').all()
-    comments = recipe.comments.select_related('user').order_by('-created_at')
+
+    # === СОРТИРОВКА КОММЕНТАРИЕВ ===
+    sort = request.GET.get('sort', 'date')
+    if sort == 'likes':
+        comments = recipe.comments.select_related('user').annotate(
+            likes_count=Count('votes', filter=Q(votes__vote_type='like'))
+        ).order_by('-likes_count', '-created_at')
+    else:
+        comments = recipe.comments.select_related('user').order_by('-created_at')
+
+    # Прокачиваем каждый комментарий данными о лайках/дизлайках
+    user_votes = {}
+    if request.user.is_authenticated:
+        votes = CommentVote.objects.filter(
+            user=request.user,
+            comment__recipe=recipe
+        ).values_list('comment_id', 'vote_type')
+        user_votes = dict(votes)
+
+    comments_data = []
+    for comment in comments:
+        likes = comment.votes.filter(vote_type='like').count()
+        dislikes = comment.votes.filter(vote_type='dislike').count()
+        comments_data.append({
+            'obj': comment,
+            'likes': likes,
+            'dislikes': dislikes,
+            'user_vote': user_votes.get(comment.id),
+        })
 
     is_favorite = False
     is_liked = False
@@ -110,11 +139,12 @@ def recipe_detail(request, slug):
     return render(request, 'recipes/recipe_detail.html', {
         'recipe': recipe,
         'ingredients': ingredients,
-        'comments': comments,
+        'comments_data': comments_data,
+        'comments_count': len(comments_data),
         'is_favorite': is_favorite,
         'is_liked': is_liked,
         'likes_count': recipe.likes.count(),
-        'comments_count': comments.count(),
+        'sort': sort,
     })
 
 
@@ -206,4 +236,40 @@ def recipe_add(request):
     return render(request, 'recipes/recipe_add.html', {
         'form': form,
         'formset': formset,
+    })
+
+@require_POST
+def vote_comment(request, comment_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'auth_required'}, status=401)
+
+    comment = get_object_or_404(Comment, id=comment_id)
+    vote_type = request.POST.get('vote_type')
+
+    if vote_type not in ('like', 'dislike'):
+        return JsonResponse({'error': 'invalid'}, status=400)
+
+    existing = CommentVote.objects.filter(user=request.user, comment=comment).first()
+
+    if existing:
+        if existing.vote_type == vote_type:
+            # Убираем голос
+            existing.delete()
+            user_vote = None
+        else:
+            # Меняем голос
+            existing.vote_type = vote_type
+            existing.save()
+            user_vote = vote_type
+    else:
+        CommentVote.objects.create(user=request.user, comment=comment, vote_type=vote_type)
+        user_vote = vote_type
+
+    likes = comment.votes.filter(vote_type='like').count()
+    dislikes = comment.votes.filter(vote_type='dislike').count()
+
+    return JsonResponse({
+        'likes': likes,
+        'dislikes': dislikes,
+        'user_vote': user_vote,
     })

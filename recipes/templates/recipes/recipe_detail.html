@@ -147,7 +147,14 @@
 
     <!-- КОММЕНТАРИИ -->
     <section class="comments-section">
-        <h2 class="recipe-section-title">Комментарии ({{ comments_count }})</h2>
+        <div class="comments-header">
+            <h2 class="recipe-section-title">Комментарии ({{ comments_count }})</h2>
+
+            <div class="comments-sort">
+                <a href="?sort=date" class="sort-btn {% if sort == 'date' %}active{% endif %}">Новые</a>
+                <a href="?sort=likes" class="sort-btn {% if sort == 'likes' %}active{% endif %}">Популярные</a>
+            </div>
+        </div>
 
         {% if user.is_authenticated %}
             <form method="post" action="{% url 'add_comment' recipe.id %}" class="comment-form">
@@ -162,21 +169,35 @@
         {% endif %}
 
         <div class="comments-list">
-            {% for comment in comments %}
-                <div class="comment-item">
+            {% for item in comments_data %}
+                <div class="comment-item" data-comment-id="{{ item.obj.id }}">
                     <div class="comment-item__avatar">
-                        {% if comment.user.avatar %}
-                            <img src="{{ comment.user.avatar.url }}" alt="{{ comment.user.username }}">
+                        {% if item.obj.user.avatar %}
+                            <img src="{{ item.obj.user.avatar.url }}" alt="{{ item.obj.user.username }}">
                         {% else %}
-                            <div class="comment-avatar-placeholder">{{ comment.user.username|first|upper }}</div>
+                            <div class="comment-avatar-placeholder">{{ item.obj.user.username|first|upper }}</div>
                         {% endif %}
                     </div>
                     <div class="comment-item__body">
                         <div class="comment-item__header">
-                            <a href="{% url 'profile' comment.user.username %}" class="comment-item__name">{{ comment.user.username }}</a>
-                            <span class="comment-item__date">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+                            <a href="{% url 'profile' item.obj.user.username %}" class="comment-item__name">{{ item.obj.user.username }}</a>
+                            <span class="comment-item__date">{{ item.obj.created_at|date:"d.m.Y H:i" }}</span>
                         </div>
-                        <p class="comment-item__text">{{ comment.content }}</p>
+                        <p class="comment-item__text">{{ item.obj.content }}</p>
+
+                        <!-- ЛАЙКИ / ДИЗЛАЙКИ -->
+                        <div class="comment-votes">
+                            <button class="vote-btn vote-btn--like {% if item.user_vote == 'like' %}active{% endif %}"
+                                    data-url="{% url 'vote_comment' item.obj.id %}"
+                                    data-vote="like">
+                                👍 <span class="vote-count">{{ item.likes }}</span>
+                            </button>
+                            <button class="vote-btn vote-btn--dislike {% if item.user_vote == 'dislike' %}active{% endif %}"
+                                    data-url="{% url 'vote_comment' item.obj.id %}"
+                                    data-vote="dislike">
+                                👎 <span class="vote-count">{{ item.dislikes }}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             {% empty %}
@@ -281,5 +302,40 @@ if (favBtn) {
         }
     });
 }
+// === Голосование за комментарии ===
+document.querySelectorAll('.vote-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const url = btn.dataset.url;
+        const voteType = btn.dataset.vote;
+        const commentItem = btn.closest('.comment-item');
+
+        const formData = new FormData();
+        formData.append('vote_type', voteType);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            body: formData,
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login/?next=' + window.location.pathname;
+            return;
+        }
+
+        const data = await response.json();
+
+        // Обновляем счётчики
+        commentItem.querySelector('.vote-btn--like .vote-count').textContent = data.likes;
+        commentItem.querySelector('.vote-btn--dislike .vote-count').textContent = data.dislikes;
+
+        // Обновляем активные состояния
+        const likeBtn = commentItem.querySelector('.vote-btn--like');
+        const dislikeBtn = commentItem.querySelector('.vote-btn--dislike');
+
+        likeBtn.classList.toggle('active', data.user_vote === 'like');
+        dislikeBtn.classList.toggle('active', data.user_vote === 'dislike');
+    });
+});
 </script>
 {% endblock %}

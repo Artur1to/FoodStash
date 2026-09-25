@@ -109,3 +109,21 @@ class Like(models.Model):
 
     class Meta:
         unique_together = ('user', 'recipe')
+
+
+class CommentVote(models.Model):
+    VOTE_CHOICES = [
+        ('like', 'Like'),
+        ('dislike', 'Dislike'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='votes')
+    vote_type = models.CharField(max_length=10, choices=VOTE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'comment')
+
+    def __str__(self):
+        return f"{self.user.username} — {self.vote_type}"

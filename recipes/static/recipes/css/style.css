@@ -1546,3 +1546,87 @@ textarea.form-input {
     background: var(--primary-soft);
     color: var(--primary);
 }
+
+/* ===== СОРТИРОВКА КОММЕНТАРИЕВ ===== */
+.comments-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.comments-header .recipe-section-title {
+    margin-bottom: 0;
+}
+
+.comments-sort {
+    display: flex;
+    gap: 4px;
+    background: #fff;
+    padding: 4px;
+    border-radius: 100px;
+    box-shadow: var(--shadow-sm);
+}
+
+.sort-btn {
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+
+.sort-btn:hover {
+    color: var(--text);
+}
+
+.sort-btn.active {
+    background: var(--primary);
+    color: #fff;
+}
+
+/* ===== ЛАЙКИ / ДИЗЛАЙКИ НА КОММЕНТАРИЯХ ===== */
+.comment-votes {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.vote-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.vote-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.vote-btn.active.vote-btn--like {
+    background: #e8f5e9;
+    border-color: #4caf50;
+    color: #2e7d32;
+}
+
+.vote-btn.active.vote-btn--dislike {
+    background: #ffebee;
+    border-color: #e53935;
+    color: #c62828;
+}
+
+.vote-count {
+    font-weight: 600;
+}
