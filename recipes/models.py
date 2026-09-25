@@ -2,12 +2,13 @@ from django.db import models
 from django.utils.text import slugify
 from django.contrib.auth.models import AbstractUser
 from unidecode import unidecode
+from .utils import latin_filename
 
 
 class User(AbstractUser):
-    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    avatar = models.ImageField(upload_to=latin_filename, blank=True, null=True)
     bio = models.TextField(blank=True, max_length=500)
-    banner = models.ImageField(upload_to='banners/', blank=True, null=True)
+    banner = models.ImageField(upload_to=latin_filename, blank=True, null=True)
 
     NICKNAME_STYLES = [
         ('default', 'Обычный'),
@@ -62,7 +63,7 @@ class Recipe(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='recipes')
     description = models.TextField(blank=True)
     steps = models.TextField()
-    image = models.ImageField(upload_to='recipes/', blank=True, null=True)
+    image = models.ImageField(upload_to=latin_filename, blank=True, null=True)
     cooking_time = models.PositiveIntegerField(help_text='Время в минутах')
     servings = models.PositiveIntegerField(default=2)
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='easy')
