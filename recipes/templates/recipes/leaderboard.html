@@ -1,0 +1,74 @@
+{% extends 'recipes/base.html' %}
+{% block title %}Лидеры — FoodStash{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <h1 class="page-title">Зал славы</h1>
+        <p class="page-subtitle">Лучшие авторы FoodStash</p>
+    </div>
+
+    <!-- ВКЛАДКИ -->
+    <div class="profile-tabs">
+        <a href="?tab=subscribers" class="profile-tab {% if tab == 'subscribers' %}active{% endif %}">
+            👥 По подписчикам
+        </a>
+        <a href="?tab=likes" class="profile-tab {% if tab == 'likes' %}active{% endif %}">
+            ❤️ По лайкам
+        </a>
+        <a href="?tab=views" class="profile-tab {% if tab == 'views' %}active{% endif %}">
+            👁 По просмотрам
+        </a>
+    </div>
+
+    <!-- СПИСОК -->
+    {% if leaders %}
+        <div class="leaderboard-list">
+            {% for item in leaders %}
+                <a href="{% url 'profile' item.user.username %}" class="leaderboard-row {% if item.rank <= 3 %}leaderboard-row--top{% endif %}">
+                    <div class="leaderboard-row__rank">
+                        {% if item.rank == 1 %}🥇
+                        {% elif item.rank == 2 %}🥈
+                        {% elif item.rank == 3 %}🥉
+                        {% else %}#{{ item.rank }}{% endif %}
+                    </div>
+
+                    <div class="leaderboard-row__avatar">
+                        {% if item.user.avatar %}
+                            <img src="{{ item.user.avatar.url }}" alt="{{ item.user.username }}">
+                        {% else %}
+                            <div class="avatar-placeholder avatar-placeholder--sm">{{ item.user.username|first|upper }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="leaderboard-row__info">
+                        <div class="leaderboard-row__name nick-{{ item.user.nickname_style }}">
+                            {{ item.user.username }}
+                        </div>
+                        {% if item.user.get_full_name %}
+                            <div class="leaderboard-row__fullname">{{ item.user.get_full_name }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="leaderboard-row__score">
+                        <div class="leaderboard-row__score-value">{{ item.score }}</div>
+                        <div class="leaderboard-row__score-label">
+                            {% if tab == 'subscribers' %}подписчиков
+                            {% elif tab == 'likes' %}лайков
+                            {% else %}просмотров{% endif %}
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state__icon">🏆</div>
+            <h3 class="empty-state__title">Пока никого нет</h3>
+            <p class="empty-state__text">Будь первым, кто попадёт в зал славы!</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

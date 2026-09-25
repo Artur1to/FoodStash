@@ -1915,3 +1915,121 @@ body.dark .nick-cosmic {
     background-clip: text;
     -webkit-text-fill-color: transparent;
 }
+
+/* ===== ЛИДЕРБОРД ===== */
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 60px;
+}
+
+.leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+}
+
+.leaderboard-row:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow);
+}
+
+.leaderboard-row--top {
+    background: linear-gradient(135deg, #fff9f5 0%, #fff3ec 100%);
+    border: 1px solid #ffe0cc;
+}
+
+.leaderboard-row__rank {
+    flex-shrink: 0;
+    width: 48px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.leaderboard-row--top .leaderboard-row__rank {
+    font-size: 28px;
+}
+
+.leaderboard-row__avatar {
+    flex-shrink: 0;
+}
+
+.leaderboard-row__avatar img,
+.avatar-placeholder--sm {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-placeholder--sm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary) 0%, #ff9d6e 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 20px;
+}
+
+.leaderboard-row__info {
+    flex: 1;
+    min-width: 0;
+}
+
+.leaderboard-row__name {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.leaderboard-row__fullname {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.leaderboard-row__score {
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.leaderboard-row__score-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.leaderboard-row__score-label {
+    font-size: 12px;
+    color: var(--text-light);
+}
+
+@media (max-width: 600px) {
+    .leaderboard-row {
+        padding: 12px;
+        gap: 12px;
+    }
+    .leaderboard-row__rank {
+        width: 32px;
+        font-size: 16px;
+    }
+    .leaderboard-row__avatar img,
+    .avatar-placeholder--sm {
+        width: 40px;
+        height: 40px;
+    }
+    .leaderboard-row__name {
+        font-size: 14px;
+    }
+    .leaderboard-row__score-value {
+        font-size: 16px;
+    }
+}

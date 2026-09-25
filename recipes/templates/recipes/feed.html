@@ -1,0 +1,46 @@
+{% extends 'recipes/base.html' %}
+{% block title %}Моя лента — FoodStash{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <h1 class="page-title">Моя лента</h1>
+        <p class="page-subtitle">Рецепты авторов, на которых вы подписаны</p>
+    </div>
+
+    {% if recipes %}
+        <div class="recipes-grid">
+            {% for recipe in recipes %}
+                <a href="{% url 'recipe_detail' recipe.slug %}" class="recipe-card">
+                    <div class="recipe-card__image">
+                        {% if recipe.image %}
+                            <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}">
+                        {% else %}
+                            <div class="recipe-card__placeholder">🍲</div>
+                        {% endif %}
+                    </div>
+                    <div class="recipe-card__body">
+                        <h3 class="recipe-card__title">{{ recipe.title }}</h3>
+                        <p class="recipe-card__desc">{{ recipe.description|truncatewords:12 }}</p>
+                        <div class="recipe-card__meta">
+                            <span class="nick-{{ recipe.author.nickname_style }}">{{ recipe.author.username }}</span>
+                            <span>⏱ {{ recipe.cooking_time }} мин</span>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state__icon">👥</div>
+            <h3 class="empty-state__title">Лента пуста</h3>
+            <p class="empty-state__text">
+                Подпишись на интересных авторов — и их рецепты появятся здесь.
+            </p>
+            <a href="{% url 'home' %}" class="btn btn--primary">Найти авторов</a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

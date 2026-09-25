@@ -184,3 +184,14 @@ class UserAchievement(models.Model):
 
     def __str__(self):
         return f"{self.user.username} — {self.achievement.name}"
+
+class Subscription(models.Model):
+    subscriber = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscribers')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('subscriber', 'author')
+
+    def __str__(self):
+        return f"{self.subscriber.username} → {self.author.username}"

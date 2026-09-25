@@ -10,6 +10,10 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='recipes/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 
+    path('feed/', views.feed, name='feed'),
+    path('leaderboard/', views.leaderboard, name='leaderboard'),
+    path('user/<str:username>/subscribe/', views.toggle_subscription, name='toggle_subscription'),
+
     # Профили
     path('profile/edit/', views.profile_edit, name='profile_edit'),
     path('profile/<str:username>/', views.profile_view, name='profile'),

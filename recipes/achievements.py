@@ -1,4 +1,4 @@
-from .models import Achievement, UserAchievement, Recipe, Comment, CommentVote
+from .models import Achievement, UserAchievement, Recipe, Comment, CommentVote, Subscription
 
 
 def _grant(user, code):
@@ -93,5 +93,16 @@ def check_vote_achievements(user):
 
     if count >= 10 and _grant(user, 'judge_10'):
         unlocked.append('judge_10')
+
+    return unlocked
+
+def check_subscriber_achievements(user):
+    """Ачивки за подписчиков"""
+    unlocked = []
+
+    count = Subscription.objects.filter(author=user).count()
+
+    if count >= 1 and _grant(user, 'first_subscriber'):
+        unlocked.append('first_subscriber')
 
     return unlocked

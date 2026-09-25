@@ -4,13 +4,13 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.forms import inlineformset_factory
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from .forms import RegisterForm, UserForm, RecipeForm, RecipeIngredientForm
 from . import achievements
 from .models import (
     User, Category, Ingredient, Recipe,
     RecipeIngredient, Favorite, Rating, Comment, Like, CommentVote,
-    Achievement, UserAchievement
+    Achievement, UserAchievement, Subscription
 )
 
 def home(request):
@@ -41,6 +41,14 @@ def register_view(request):
 def profile_view(request, username):
     user_obj = get_object_or_404(User, username=username)
     is_own = request.user == user_obj
+
+    is_subscribed = False
+    subscribers_count = user_obj.subscribers.count()
+    if request.user.is_authenticated and request.user != user_obj:
+        is_subscribed = Subscription.objects.filter(
+            subscriber=request.user,
+            author=user_obj
+        ).exists()
 
     # Определяем активную вкладку
     tab = request.GET.get('tab', 'recipes')
@@ -77,6 +85,8 @@ def profile_view(request, username):
         'is_own': is_own,
         'counts': counts,
         'user_achievements': user_achievements,
+        'is_subscribed': is_subscribed,
+        'subscribers_count': subscribers_count,
     })
 
 
@@ -294,4 +304,86 @@ def vote_comment(request, comment_id):
         'likes': likes,
         'dislikes': dislikes,
         'user_vote': user_vote,
+    })
+
+@require_POST
+def toggle_subscription(request, username):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'auth_required'}, status=401)
+
+    author = get_object_or_404(User, username=username)
+
+    if author == request.user:
+        return JsonResponse({'error': 'cant_subscribe_self'}, status=400)
+
+    sub, created = Subscription.objects.get_or_create(
+        subscriber=request.user,
+        author=author
+    )
+
+    if not created:
+        sub.delete()
+        status = 'removed'
+    else:
+        status = 'added'
+        # Проверка ачивки у автора
+        unlocked = achievements.check_subscriber_achievements(author)
+        if unlocked:
+            pass  # ачивка выдастся, уведомление покажем при следующем заходе автора
+
+    return JsonResponse({
+        'status': status,
+        'count': author.subscribers.count(),
+    })
+
+def feed(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    # Кто на кого подписан
+    subscribed_authors = Subscription.objects.filter(
+        subscriber=request.user
+    ).values_list('author_id', flat=True)
+
+    # Рецепты от этих авторов
+    recipes = Recipe.objects.filter(
+        author_id__in=subscribed_authors
+    ).select_related('author', 'category').order_by('-created_at')
+
+    return render(request, 'recipes/feed.html', {
+        'recipes': recipes,
+        'authors_count': len(subscribed_authors),
+    })
+
+def leaderboard(request):
+    tab = request.GET.get('tab', 'subscribers')
+    if tab not in ('subscribers', 'likes', 'views'):
+        tab = 'subscribers'
+
+    if tab == 'likes':
+        # Считаем лайки через аннотацию
+        users = User.objects.annotate(
+            score=Count('recipes__likes')
+        ).filter(score__gt=0).order_by('-score')[:50]
+    elif tab == 'views':
+        users = User.objects.annotate(
+            score=Sum('recipes__views_count')
+        ).filter(score__gt=0).order_by('-score')[:50]
+    else:  # subscribers
+        users = User.objects.annotate(
+            score=Count('subscribers')
+        ).filter(score__gt=0).order_by('-score')[:50]
+
+    # Прокачиваем данными для карточек
+    leaders = []
+    for i, u in enumerate(users, start=1):
+        leaders.append({
+            'rank': i,
+            'user': u,
+            'score': u.score,
+        })
+
+    return render(request, 'recipes/leaderboard.html', {
+        'leaders': leaders,
+        'tab': tab,
     })
