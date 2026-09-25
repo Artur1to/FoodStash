@@ -27,7 +27,7 @@
         <nav class="header__nav">
             <a href="{% url 'category_list' %}" class="header__link">Категории</a>
             {% if user.is_authenticated %}
-                <a href="{% url 'profile' user.username %}" class="header__link">{{ user.username }}</a>
+                <a href="{% url 'profile' user.username %}" class="header__link nick-{{ user.nickname_style }}">{{ user.username }}</a>
                 <form action="{% url 'logout' %}" method="post" style="display:inline;">
                     {% csrf_token %}
                     <button type="submit" class="header__link header__link--muted" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:14px;">Выйти</button>

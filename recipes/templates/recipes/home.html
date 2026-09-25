@@ -69,7 +69,7 @@
                         <div class="recipe-card__meta">
                             <span>⏱ {{ recipe.cooking_time }} мин</span>
                             <span>❤️ {{ recipe.likes.count }}</span>
-                            <span>👤 {{ recipe.author.username }}</span>
+                            <span>👤 <span class="nick-{{ recipe.author.nickname_style }}">{{ recipe.author.username }}</span></span>
                         </div>
                     </div>
                 </a>

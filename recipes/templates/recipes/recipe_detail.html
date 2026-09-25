@@ -78,7 +78,7 @@
                 {% endif %}
                 <div>
                     <div class="recipe-author__label">Автор рецепта</div>
-                    <div class="recipe-author__name">{{ recipe.author.username }}</div>
+                    <div class="recipe-author__name nick-{{ recipe.author.nickname_style }}">{{ recipe.author.username }}</div>
                 </div>
             </a>
 
@@ -180,7 +180,7 @@
                     </div>
                     <div class="comment-item__body">
                         <div class="comment-item__header">
-                            <a href="{% url 'profile' item.obj.user.username %}" class="comment-item__name">{{ item.obj.user.username }}</a>
+                            <a href="{% url 'profile' item.obj.user.username %}" class="comment-item__name nick-{{ item.obj.user.nickname_style }}">{{ item.obj.user.username }}</a>
                             <span class="comment-item__date">{{ item.obj.created_at|date:"d.m.Y H:i" }}</span>
                         </div>
                         <p class="comment-item__text">{{ item.obj.content }}</p>

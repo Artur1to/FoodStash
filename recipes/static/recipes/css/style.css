@@ -1783,3 +1783,135 @@ textarea.form-input {
         max-width: none;
     }
 }
+
+/* ===== ЦВЕТНЫЕ НИКИ ===== */
+
+/* Базовое поведение — просто текст */
+.nick-default {
+    color: inherit;
+    font-weight: 600;
+}
+
+/* Золотой градиент */
+.nick-gold {
+    background: linear-gradient(135deg, #ffd700 0%, #ffb800 50%, #ff8c00 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+/* Огненный */
+.nick-fire {
+    background: linear-gradient(135deg, #ff0000 0%, #ff4500 40%, #ff8c00 80%, #ffd700 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+/* Ледяной */
+.nick-ice {
+    background: linear-gradient(135deg, #00bfff 0%, #87ceeb 50%, #e0f7ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+/* Кровавый */
+.nick-blood {
+    background: linear-gradient(135deg, #8b0000 0%, #dc143c 50%, #ff0000 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+/* Изумрудный */
+.nick-emerald {
+    background: linear-gradient(135deg, #00ff7f 0%, #00c853 50%, #004d40 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+/* Королевский */
+.nick-royal {
+    background: linear-gradient(135deg, #9c27b0 0%, #673ab7 50%, #3f51b5 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+/* Космический */
+.nick-cosmic {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f3460 60%, #533483 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+/* Неон розовый */
+.nick-neon-pink {
+    color: #ff10f0;
+    text-shadow:
+        0 0 5px #ff10f0,
+        0 0 10px #ff10f0,
+        0 0 20px #ff10f0,
+        0 0 40px #ff10f0;
+    font-weight: 700;
+}
+
+/* Неон голубой */
+.nick-neon-blue {
+    color: #00f0ff;
+    text-shadow:
+        0 0 5px #00f0ff,
+        0 0 10px #00f0ff,
+        0 0 20px #00f0ff,
+        0 0 40px #00f0ff;
+    font-weight: 700;
+}
+
+/* Неон зелёный */
+.nick-neon-green {
+    color: #39ff14;
+    text-shadow:
+        0 0 5px #39ff14,
+        0 0 10px #39ff14,
+        0 0 20px #39ff14,
+        0 0 40px #39ff14;
+    font-weight: 700;
+}
+
+/* Радужный анимированный */
+.nick-rainbow {
+    background: linear-gradient(
+        90deg,
+        #ff0000, #ff7700, #ffff00, #00ff00,
+        #00ffff, #0000ff, #8b00ff, #ff0000
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    animation: rainbowShift 3s linear infinite;
+}
+
+@keyframes rainbowShift {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
+
+/* Тёмная тема — для ников, где нужен светлый фон */
+body.dark .nick-cosmic {
+    background: linear-gradient(135deg, #e0e0f0 0%, #a0a0d0 50%, #7070b0 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}

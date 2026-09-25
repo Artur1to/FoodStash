@@ -19,12 +19,13 @@ class RegisterForm(UserCreationForm):
 class UserForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'avatar', 'banner', 'bio']
+        fields = ['first_name', 'last_name', 'email', 'avatar', 'banner', 'bio', 'nickname_style']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-input'}),
             'last_name': forms.TextInput(attrs={'class': 'form-input'}),
             'email': forms.EmailInput(attrs={'class': 'form-input'}),
             'bio': forms.Textarea(attrs={'rows': 4, 'class': 'form-input', 'placeholder': 'Расскажи о себе...'}),
+            'nickname_style': forms.Select(attrs={'class': 'form-input'}),
         }
 
 

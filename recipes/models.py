@@ -9,6 +9,27 @@ class User(AbstractUser):
     bio = models.TextField(blank=True, max_length=500)
     banner = models.ImageField(upload_to='banners/', blank=True, null=True)
 
+    NICKNAME_STYLES = [
+        ('default', 'Обычный'),
+        ('gold', 'Золотой градиент'),
+        ('fire', 'Огненный'),
+        ('ice', 'Ледяной'),
+        ('blood', 'Кровавый'),
+        ('emerald', 'Изумрудный'),
+        ('royal', 'Королевский'),
+        ('cosmic', 'Космический'),
+        ('neon-pink', 'Неон розовый'),
+        ('neon-blue', 'Неон голубой'),
+        ('neon-green', 'Неон зелёный'),
+        ('rainbow', 'Радужный (анимированный)'),
+    ]
+
+    nickname_style = models.CharField(
+        max_length=20,
+        choices=NICKNAME_STYLES,
+        default='default'
+    )
+
     def __str__(self):
         return self.username
 
