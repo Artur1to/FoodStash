@@ -3,31 +3,51 @@
 
 {% block content %}
 <div class="container">
-    <div class="profile-header">
-        <div class="profile-header__avatar">
-            {% if profile_user.avatar %}
-                <img src="{{ profile_user.avatar.url }}" alt="{{ profile_user.username }}">
-            {% else %}
-                <div class="avatar-placeholder">{{ profile_user.username|first|upper }}</div>
-            {% endif %}
+    <!-- ШАПКА ПРОФИЛЯ С БАННЕРОМ -->
+    <div class="profile-header-card">
+        <div class="profile-banner" {% if profile_user.banner %}style="background-image: url('{{ profile_user.banner.url }}');"{% endif %}>
         </div>
 
-        <div class="profile-header__info">
-            <h1 class="profile-name">{{ profile_user.username }}</h1>
-            {% if profile_user.get_full_name %}
-                <p class="profile-fullname">{{ profile_user.get_full_name }}</p>
-            {% endif %}
-            <p class="profile-joined">На FoodStash с {{ profile_user.date_joined|date:"F Y" }}</p>
+        <div class="profile-header-content">
+            <div class="profile-header__avatar">
+                {% if profile_user.avatar %}
+                    <img src="{{ profile_user.avatar.url }}" alt="{{ profile_user.username }}">
+                {% else %}
+                    <div class="avatar-placeholder">{{ profile_user.username|first|upper }}</div>
+                {% endif %}
+            </div>
 
-            {% if profile_user.bio %}
-                <p class="profile-bio">{{ profile_user.bio }}</p>
-            {% endif %}
+            <div class="profile-header__info">
+                <h1 class="profile-name">{{ profile_user.username }}</h1>
+                {% if profile_user.get_full_name %}
+                    <p class="profile-fullname">{{ profile_user.get_full_name }}</p>
+                {% endif %}
+                <p class="profile-joined">На FoodStash с {{ profile_user.date_joined|date:"F Y" }}</p>
 
-            {% if is_own %}
-                <a href="{% url 'profile_edit' %}" class="btn btn--primary">Редактировать профиль</a>
-            {% endif %}
+                {% if profile_user.bio %}
+                    <p class="profile-bio">{{ profile_user.bio }}</p>
+                {% endif %}
+
+                {% if is_own %}
+                    <a href="{% url 'profile_edit' %}" class="btn btn--primary">Редактировать профиль</a>
+                {% endif %}
+            </div>
         </div>
     </div>
+
+    {% if user_achievements %}
+    <div class="profile-achievements">
+        <h3 class="profile-achievements__title">🏆 Достижения ({{ user_achievements.count }})</h3>
+        <div class="achievements-grid">
+            {% for ua in user_achievements %}
+                <div class="achievement-card" title="{{ ua.achievement.description }}">
+                    <div class="achievement-card__icon">{{ ua.achievement.icon }}</div>
+                    <div class="achievement-card__name">{{ ua.achievement.name }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     <!-- ВКЛАДКИ -->
     <div class="profile-tabs">

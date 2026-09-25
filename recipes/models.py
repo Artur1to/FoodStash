@@ -5,9 +5,9 @@ from unidecode import unidecode
 
 
 class User(AbstractUser):
-    """Кастомная модель пользователя"""
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     bio = models.TextField(blank=True, max_length=500)
+    banner = models.ImageField(upload_to='banners/', blank=True, null=True)
 
     def __str__(self):
         return self.username
@@ -127,3 +127,38 @@ class CommentVote(models.Model):
 
     def __str__(self):
         return f"{self.user.username} — {self.vote_type}"
+
+class Achievement(models.Model):
+    CATEGORY_CHOICES = [
+        ('author', 'Автор'),
+        ('social', 'Социальные'),
+        ('activity', 'Активность'),
+        ('hidden', 'Скрытые'),
+    ]
+
+    code = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    icon = models.CharField(max_length=10)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='author')
+    is_hidden = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['category', 'order']
+
+    def __str__(self):
+        return f"{self.icon} {self.name}"
+
+
+class UserAchievement(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='achievements')
+    achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
+    unlocked_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'achievement')
+        ordering = ['-unlocked_at']
+
+    def __str__(self):
+        return f"{self.user.username} — {self.achievement.name}"

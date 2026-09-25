@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Category, Ingredient, Recipe, RecipeIngredient, Favorite, Rating, Comment
+from .models import (
+    User, Category, Ingredient, Recipe, RecipeIngredient,
+    Favorite, Rating, Comment, Achievement, UserAchievement, Like, CommentVote
+)
 
 
 @admin.register(User)
@@ -28,3 +31,16 @@ admin.site.register(Ingredient)
 admin.site.register(Favorite)
 admin.site.register(Rating)
 admin.site.register(Comment)
+
+@admin.register(Achievement)
+class AchievementAdmin(admin.ModelAdmin):
+    list_display = ('icon', 'name', 'code', 'category', 'is_hidden', 'order')
+    list_filter = ('category', 'is_hidden')
+    search_fields = ('name', 'code')
+
+
+@admin.register(UserAchievement)
+class UserAchievementAdmin(admin.ModelAdmin):
+    list_display = ('user', 'achievement', 'unlocked_at')
+    list_filter = ('achievement',)
+    search_fields = ('user__username', 'achievement__name')

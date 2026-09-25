@@ -6,9 +6,11 @@ from django.contrib.auth.decorators import login_required
 from django.forms import inlineformset_factory
 from django.db.models import Count, Q
 from .forms import RegisterForm, UserForm, RecipeForm, RecipeIngredientForm
+from . import achievements
 from .models import (
     User, Category, Ingredient, Recipe,
-    RecipeIngredient, Favorite, Rating, Comment, Like, CommentVote
+    RecipeIngredient, Favorite, Rating, Comment, Like, CommentVote,
+    Achievement, UserAchievement
 )
 
 def home(request):
@@ -66,12 +68,15 @@ def profile_view(request, username):
         'favorites': Favorite.objects.filter(user=user_obj).count(),
     }
 
+    user_achievements = UserAchievement.objects.filter(user=user_obj).select_related('achievement')
+
     return render(request, 'recipes/profile.html', {
         'profile_user': user_obj,
         'items': items,
         'tab': tab,
         'is_own': is_own,
         'counts': counts,
+        'user_achievements': user_achievements,
     })
 
 
@@ -136,6 +141,11 @@ def recipe_detail(request, slug):
         is_favorite = Favorite.objects.filter(user=request.user, recipe=recipe).exists()
         is_liked = Like.objects.filter(user=request.user, recipe=recipe).exists()
 
+    # === АЧИВКИ: ЗАБИРАЕМ ИЗ СЕССИИ, ЧТОБЫ ПОКАЗАТЬ ТОСТ ===
+    new_achievements_toast = Achievement.objects.filter(
+        code__in=request.session.pop('unlocked_achievements', [])
+    )
+
     return render(request, 'recipes/recipe_detail.html', {
         'recipe': recipe,
         'ingredients': ingredients,
@@ -145,6 +155,7 @@ def recipe_detail(request, slug):
         'is_liked': is_liked,
         'likes_count': recipe.likes.count(),
         'sort': sort,
+        'new_achievements_toast': new_achievements_toast,   # ← ВОТ ЭТА СТРОКА
     })
 
 
@@ -175,6 +186,9 @@ def toggle_like(request, recipe_id):
         like.delete()
         return JsonResponse({'status': 'removed', 'count': recipe.likes.count()})
 
+    if recipe.author != request.user:
+        achievements.check_like_received(recipe.author)
+
     return JsonResponse({'status': 'added', 'count': recipe.likes.count()})
 
 
@@ -188,6 +202,9 @@ def add_comment(request, recipe_id):
 
     if content:
         Comment.objects.create(user=request.user, recipe=recipe, content=content)
+        unlocked = achievements.check_comment_achievements(request.user)
+        if unlocked:
+            request.session['unlocked_achievements'] = unlocked
 
     return redirect('recipe_detail', slug=recipe.slug)
 
@@ -228,6 +245,9 @@ def recipe_add(request):
             recipe.save()
             formset.instance = recipe
             formset.save()
+            unlocked = achievements.check_recipe_achievements(request.user)
+            if unlocked:
+                request.session['unlocked_achievements'] = unlocked
             return redirect('recipe_detail', slug=recipe.slug)
     else:
         form = RecipeForm()
@@ -267,6 +287,8 @@ def vote_comment(request, comment_id):
 
     likes = comment.votes.filter(vote_type='like').count()
     dislikes = comment.votes.filter(vote_type='dislike').count()
+
+    achievements.check_vote_achievements(request.user)
 
     return JsonResponse({
         'likes': likes,

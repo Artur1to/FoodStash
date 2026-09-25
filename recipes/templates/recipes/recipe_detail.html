@@ -337,5 +337,24 @@ document.querySelectorAll('.vote-btn').forEach(btn => {
         dislikeBtn.classList.toggle('active', data.user_vote === 'dislike');
     });
 });
+// === ТОСТЫ АЧИВОК ===
+{% if new_achievements_toast %}
+const achievementToast = document.createElement('div');
+achievementToast.className = 'achievement-toast';
+
+let toastContent = '<div class="achievement-toast__title">🏆 Новая ачивка!</div>';
+{% for ach in new_achievements_toast %}
+toastContent += '<div class="achievement-toast__item">{{ ach.icon }} <strong>{{ ach.name }}</strong> — {{ ach.description }}</div>';
+{% endfor %}
+
+achievementToast.innerHTML = toastContent;
+document.body.appendChild(achievementToast);
+
+setTimeout(() => achievementToast.classList.add('show'), 100);
+setTimeout(() => {
+    achievementToast.classList.remove('show');
+    setTimeout(() => achievementToast.remove(), 300);
+}, 6000);
+{% endif %}
 </script>
 {% endblock %}
