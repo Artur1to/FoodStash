@@ -29,4 +29,6 @@ urlpatterns = [
 
     path('categories/', views.category_list, name='category_list'),
     path('category/<slug:slug>/', views.category_detail, name='category_detail'),
+
+    path('search/', views.search_recipes, name='search_recipes'),
 ]

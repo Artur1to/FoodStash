@@ -387,3 +387,59 @@ def leaderboard(request):
         'leaders': leaders,
         'tab': tab,
     })
+
+
+def search_recipes(request):
+    query = request.GET.get('q', '').strip()
+    results = []
+    found_ingredients = []
+
+    if query:
+        raw_items = query.replace(',', ' ').split()
+        user_ingredients = [item.strip().lower() for item in raw_items if len(item.strip()) >= 2]
+
+        if user_ingredients:
+            # === ФИЛЬТРАЦИЯ В PYTHON (работает с кириллицей) ===
+            all_ingredients = list(Ingredient.objects.all())
+            found_ingredients = []
+
+            for item in user_ingredients:
+                root = item[:4] if len(item) > 4 else item
+                for ing in all_ingredients:
+                    if root in ing.name.lower() and ing not in found_ingredients:
+                        found_ingredients.append(ing)
+
+            found_ids = [ing.id for ing in found_ingredients]
+
+            if found_ids:
+                recipes = Recipe.objects.filter(
+                    ingredients__ingredient_id__in=found_ids
+                ).select_related('author', 'category').prefetch_related(
+                    'ingredients__ingredient', 'likes'
+                ).annotate(
+                    match_count=Count('ingredients__ingredient_id', distinct=True)
+                ).distinct().order_by('-match_count', '-created_at')
+
+                for recipe in recipes:
+                    recipe_ings = list(recipe.ingredients.all())
+                    recipe_ing_ids = {ri.ingredient_id for ri in recipe_ings}
+                    matched = len(recipe_ing_ids & set(found_ids))
+                    total = len(recipe_ings)
+
+                    recipe.match_percent = round((matched / total) * 100) if total else 0
+                    recipe.matched_count = matched
+                    recipe.total_count = total
+
+                    missing_ids = recipe_ing_ids - set(found_ids)
+                    recipe.missing = [ri.ingredient.name for ri in recipe_ings if ri.ingredient_id in missing_ids][:5]
+
+                    results.append(recipe)
+
+                results.sort(key=lambda r: (r.match_percent, -r.match_count), reverse=True)
+
+    return render(request, 'recipes/search.html', {
+        'query': query,
+        'results': results,
+        'found_ingredients': found_ingredients,
+        'results_count': len(results),
+    })

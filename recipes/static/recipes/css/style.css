@@ -2033,3 +2033,191 @@ body.dark .nick-cosmic {
         font-size: 16px;
     }
 }
+
+/* ===== СТРАНИЦА ПОИСКА ===== */
+.search-page {
+    padding: 60px 0 40px;
+    text-align: center;
+}
+
+.search-form {
+    display: flex;
+    gap: 12px;
+    max-width: 640px;
+    margin: 0 auto 24px;
+}
+
+.search-form__input {
+    flex: 1;
+    height: 56px;
+    padding: 0 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: #fff;
+    font-size: 16px;
+    font-family: inherit;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+}
+
+.search-form__input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+.search-form .btn {
+    height: 56px;
+    padding: 0 32px;
+    border-radius: var(--radius-lg);
+}
+
+.search-tags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+/* РЕЗУЛЬТАТЫ */
+.search-results-header {
+    margin: 40px 0 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.search-results-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.search-results-title span {
+    color: var(--primary);
+}
+
+.search-results-subtitle {
+    font-size: 15px;
+    color: var(--text-muted);
+}
+
+.search-found {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    font-size: 14px;
+}
+
+.search-found__label {
+    color: var(--text-muted);
+}
+
+.search-found__item {
+    padding: 4px 12px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* КАРТОЧКА С ПОИСКОМ */
+.recipe-card--search {
+    position: relative;
+}
+
+.match-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.match-badge--high {
+    background: rgba(76, 175, 80, 0.95);
+}
+
+.match-badge--medium {
+    background: rgba(255, 152, 0, 0.95);
+}
+
+.match-badge--low {
+    background: rgba(158, 158, 158, 0.95);
+}
+
+/* ПРОГРЕСС-БАР СОВПАДЕНИЯ */
+.recipe-match {
+    margin: 12px 0;
+}
+
+.recipe-match__bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.recipe-match__fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary) 0%, #ff9d6e 100%);
+    border-radius: 100px;
+    transition: width 0.3s;
+}
+
+.recipe-match__text {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* НЕДОСТАЮЩИЕ ИНГРЕДИЕНТЫ */
+.recipe-missing {
+    font-size: 12px;
+    color: var(--text-light);
+    line-height: 1.4;
+    padding: 8px 10px;
+    background: #fafafa;
+    border-radius: 8px;
+    border-left: 3px solid #e0e0e0;
+    margin-bottom: 12px;
+}
+
+.recipe-missing__label {
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-right: 4px;
+}
+
+.recipe-missing__more {
+    color: var(--text-light);
+}
+
+/* АДАПТИВ */
+@media (max-width: 700px) {
+    .search-page {
+        padding: 40px 0 24px;
+    }
+
+    .search-form {
+        flex-direction: column;
+    }
+
+    .search-form__input,
+    .search-form .btn {
+        width: 100%;
+    }
+
+    .search-results-title {
+        font-size: 20px;
+    }
+}

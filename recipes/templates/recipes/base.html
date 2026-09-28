@@ -19,8 +19,8 @@
             <span class="logo__text">FoodStash</span>
         </a>
 
-        <form action="/search/" method="get" class="header-search">
-            <input type="text" name="q" placeholder="Курица, картошка, лук..." class="header-search__input">
+        <form action="{% url 'search_recipes' %}" method="get" class="header-search">
+            <input type="text" name="q" placeholder="Курица, картошка, лук..." class="header-search__input" value="{{ query|default:'' }}">
             <button type="submit" class="header-search__btn">Найти</button>
         </form>
 

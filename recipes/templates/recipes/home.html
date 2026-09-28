@@ -8,18 +8,18 @@
         <h1 class="hero__title">Что приготовить из того, что есть?</h1>
         <p class="hero__subtitle">Введи продукты — мы найдём рецепты, которые можно приготовить прямо сейчас</p>
 
-        <form action="/search/" method="get" class="hero-search">
+        <form action="{% url 'search_recipes' %}" method="get" class="hero-search">
             <input type="text" name="q" placeholder="Например: курица, картошка, лук" class="hero-search__input">
             <button type="submit" class="btn btn--primary">Найти рецепты</button>
         </form>
 
         <div class="hero__tags">
             <span class="tag-label">Популярные:</span>
-            <a href="/search/?q=курица" class="tag">курица</a>
-            <a href="/search/?q=картошка" class="tag">картошка</a>
-            <a href="/search/?q=яйца" class="tag">яйца</a>
-            <a href="/search/?q=сыр" class="tag">сыр</a>
-            <a href="/search/?q=макароны" class="tag">макароны</a>
+            <a href="{% url 'search_recipes' %}?q=курица" class="tag">курица</a>
+            <a href="{% url 'search_recipes' %}?q=картошка" class="tag">картошка</a>
+            <a href="{% url 'search_recipes' %}?q=яйца" class="tag">яйца</a>
+            <a href="{% url 'search_recipes' %}?q=сыр" class="tag">сыр</a>
+            <a href="{% url 'search_recipes' %}?q=макароны" class="tag">макароны</a>
         </div>
     </div>
 </section>
