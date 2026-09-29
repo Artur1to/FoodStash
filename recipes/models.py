@@ -3,6 +3,7 @@ from django.utils.text import slugify
 from django.contrib.auth.models import AbstractUser
 from unidecode import unidecode
 from .utils import latin_filename
+from django.templatetags.static import static
 
 
 class User(AbstractUser):
@@ -86,6 +87,13 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def image_url(self):
+        """Возвращает URL картинки рецепта или дефолтную, если её нет"""
+        if self.image:
+            return self.image.url
+        return static('recipes/images/default-recipe.jpg')
 
 
 class RecipeIngredient(models.Model):

@@ -389,19 +389,50 @@ def leaderboard(request):
     })
 
 
+from django.core.paginator import Paginator
+
+
 def search_recipes(request):
-    query = request.GET.get('q', '').strip()
+    # === ПАРАМЕТРЫ ===
+    query = request.GET.get('q', '').strip()           # ингредиенты
+    name = request.GET.get('name', '').strip()         # поиск по названию/описанию
+    category_id = request.GET.get('category', '')      # фильтр по категории
+    difficulty = request.GET.get('difficulty', '')     # фильтр по сложности
+    time_max = request.GET.get('time_max', '')         # макс. время
+    sort = request.GET.get('sort', 'new')              # сортировка
+
     results = []
     found_ingredients = []
 
+    # === БАЗА ===
+    recipes = Recipe.objects.select_related('author', 'category').prefetch_related(
+        'ingredients__ingredient', 'likes'
+    ).all()
+
+    # === ТЕКСТОВЫЙ ПОИСК (в Python, т.к. SQLite не умеет icontains для кириллицы) ===
+    if name:
+        name_lower = name.lower()
+        recipes = [r for r in recipes if name_lower in r.title.lower() or name_lower in (r.description or '').lower()]
+
+    # === ФИЛЬТР: КАТЕГОРИЯ ===
+    if category_id and category_id.isdigit():
+        recipes = [r for r in recipes if r.category_id == int(category_id)]
+
+    # === ФИЛЬТР: СЛОЖНОСТЬ ===
+    if difficulty in ('easy', 'medium', 'hard'):
+        recipes = [r for r in recipes if r.difficulty == difficulty]
+
+    # === ФИЛЬТР: ВРЕМЯ ===
+    if time_max and time_max.isdigit():
+        recipes = [r for r in recipes if r.cooking_time <= int(time_max)]
+
+    # === ПОИСК ПО ИНГРЕДИЕНТАМ ===
     if query:
         raw_items = query.replace(',', ' ').split()
         user_ingredients = [item.strip().lower() for item in raw_items if len(item.strip()) >= 2]
 
         if user_ingredients:
-            # === ФИЛЬТРАЦИЯ В PYTHON (работает с кириллицей) ===
             all_ingredients = list(Ingredient.objects.all())
-            found_ingredients = []
 
             for item in user_ingredients:
                 root = item[:4] if len(item) > 4 else item
@@ -409,37 +440,62 @@ def search_recipes(request):
                     if root in ing.name.lower() and ing not in found_ingredients:
                         found_ingredients.append(ing)
 
-            found_ids = [ing.id for ing in found_ingredients]
+            found_ids = {ing.id for ing in found_ingredients}
 
             if found_ids:
-                recipes = Recipe.objects.filter(
-                    ingredients__ingredient_id__in=found_ids
-                ).select_related('author', 'category').prefetch_related(
-                    'ingredients__ingredient', 'likes'
-                ).annotate(
-                    match_count=Count('ingredients__ingredient_id', distinct=True)
-                ).distinct().order_by('-match_count', '-created_at')
+                # Оставляем только рецепты, где есть хотя бы один ингредиент
+                recipes = [r for r in recipes if any(
+                    ri.ingredient_id in found_ids for ri in r.ingredients.all()
+                )]
 
+                # Считаем совпадения
                 for recipe in recipes:
                     recipe_ings = list(recipe.ingredients.all())
                     recipe_ing_ids = {ri.ingredient_id for ri in recipe_ings}
-                    matched = len(recipe_ing_ids & set(found_ids))
+                    matched = len(recipe_ing_ids & found_ids)
                     total = len(recipe_ings)
 
                     recipe.match_percent = round((matched / total) * 100) if total else 0
                     recipe.matched_count = matched
                     recipe.total_count = total
 
-                    missing_ids = recipe_ing_ids - set(found_ids)
+                    missing_ids = recipe_ing_ids - found_ids
                     recipe.missing = [ri.ingredient.name for ri in recipe_ings if ri.ingredient_id in missing_ids][:5]
+            else:
+                recipes = []
 
-                    results.append(recipe)
+    # === СОРТИРОВКА ===
+    if sort == 'likes':
+        recipes = sorted(recipes, key=lambda r: r.likes.count(), reverse=True)
+    elif sort == 'views':
+        recipes = sorted(recipes, key=lambda r: r.views_count, reverse=True)
+    elif sort == 'time_asc':
+        recipes = sorted(recipes, key=lambda r: r.cooking_time)
+    elif sort == 'time_desc':
+        recipes = sorted(recipes, key=lambda r: r.cooking_time, reverse=True)
+    elif sort == 'match' and query:
+        recipes = sorted(recipes, key=lambda r: getattr(r, 'match_percent', 0), reverse=True)
+    else:  # 'new'
+        recipes = sorted(recipes, key=lambda r: r.created_at, reverse=True)
 
-                results.sort(key=lambda r: (r.match_percent, -r.match_count), reverse=True)
+    # === ПАГИНАЦИЯ ===
+    paginator = Paginator(recipes, 12)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    # Список категорий для фильтра
+    categories = Category.objects.all()
 
     return render(request, 'recipes/search.html', {
         'query': query,
-        'results': results,
+        'name': name,
+        'selected_category': category_id,
+        'selected_difficulty': difficulty,
+        'time_max': time_max,
+        'sort': sort,
         'found_ingredients': found_ingredients,
-        'results_count': len(results),
+        'page_obj': page_obj,
+        'results_count': len(recipes),
+        'categories': categories,
+        'has_filters': any([query, name, category_id, difficulty, time_max]),
     })

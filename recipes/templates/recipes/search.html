@@ -4,36 +4,85 @@
 {% block content %}
 <div class="container">
 
-    <!-- ПОИСКОВАЯ СТРОКА -->
+    <!-- ПОИСК -->
     <div class="search-page">
-        <h1 class="page-title">Что у тебя есть?</h1>
-        <p class="page-subtitle">Введи продукты через запятую — найдём рецепты, которые можно приготовить</p>
+        <h1 class="page-title">Поиск рецептов</h1>
+        <p class="page-subtitle">Введи ингредиенты, название или выбери фильтры</p>
 
         <form action="{% url 'search_recipes' %}" method="get" class="search-form">
-            <input type="text" name="q" placeholder="Курица, картошка, лук..." class="search-form__input" value="{{ query }}" autofocus>
+            <input type="text" name="q" placeholder="Ингредиенты: курица, картошка, лук..." class="search-form__input" value="{{ query }}" autofocus>
             <button type="submit" class="btn btn--primary btn--lg">Найти</button>
         </form>
 
-        <!-- ПОДСКАЗКИ -->
         <div class="search-tags">
             <span class="tag-label">Популярное:</span>
-            <a href="{% url 'search_recipes' %}?q=курица" class="tag">курица</a>
-            <a href="{% url 'search_recipes' %}?q=картошка" class="tag">картошка</a>
-            <a href="{% url 'search_recipes' %}?q=яйца" class="tag">яйца</a>
-            <a href="{% url 'search_recipes' %}?q=сыр" class="tag">сыр</a>
-            <a href="{% url 'search_recipes' %}?q=макароны" class="tag">макароны</a>
-            <a href="{% url 'search_recipes' %}?q=лук" class="tag">лук</a>
-            <a href="{% url 'search_recipes' %}?q=морковь" class="tag">морковь</a>
+            <a href="?q=курица" class="tag">курица</a>
+            <a href="?q=картошка" class="tag">картошка</a>
+            <a href="?q=яйца" class="tag">яйца</a>
+            <a href="?q=сыр" class="tag">сыр</a>
+            <a href="?q=макароны" class="tag">макароны</a>
         </div>
     </div>
 
+    <!-- ФИЛЬТРЫ -->
+    <form method="get" action="{% url 'search_recipes' %}" class="filters">
+        <input type="hidden" name="q" value="{{ query }}">
+        <input type="hidden" name="sort" value="{{ sort }}">
+
+        <div class="filters__row">
+            <div class="filters__item">
+                <label class="filters__label">Название</label>
+                <input type="text" name="name" placeholder="Например: борщ" class="form-input" value="{{ name }}">
+            </div>
+
+            <div class="filters__item">
+                <label class="filters__label">Категория</label>
+                <select name="category" class="form-input">
+                    <option value="">Все категории</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:'s' %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filters__item">
+                <label class="filters__label">Сложность</label>
+                <select name="difficulty" class="form-input">
+                    <option value="">Любая</option>
+                    <option value="easy" {% if selected_difficulty == 'easy' %}selected{% endif %}>Легко</option>
+                    <option value="medium" {% if selected_difficulty == 'medium' %}selected{% endif %}>Средне</option>
+                    <option value="hard" {% if selected_difficulty == 'hard' %}selected{% endif %}>Сложно</option>
+                </select>
+            </div>
+
+            <div class="filters__item">
+                <label class="filters__label">Время, до (мин)</label>
+                <input type="number" name="time_max" min="1" max="999" class="form-input" value="{{ time_max }}" placeholder="60">
+            </div>
+
+            <div class="filters__item filters__item--btn">
+                <button type="submit" class="btn btn--primary">Применить</button>
+                {% if has_filters %}
+                    <a href="{% url 'search_recipes' %}" class="btn btn--outline">Сбросить</a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+
     <!-- РЕЗУЛЬТАТЫ -->
-    {% if query %}
+    {% if has_filters %}
         <div class="search-results-header">
-            {% if results_count > 0 %}
+            <div>
                 <h2 class="search-results-title">
-                    Найдено рецептов: <span>{{ results_count }}</span>
+                    {% if results_count > 0 %}
+                        Найдено: <span>{{ results_count }}</span> рецептов
+                    {% else %}
+                        Ничего не найдено
+                    {% endif %}
                 </h2>
+
                 {% if found_ingredients %}
                     <div class="search-found">
                         <span class="search-found__label">Распознаны:</span>
@@ -42,15 +91,33 @@
                         {% endfor %}
                     </div>
                 {% endif %}
-            {% else %}
-                <h2 class="search-results-title">Ничего не найдено по запросу «{{ query }}»</h2>
-                <p class="search-results-subtitle">Попробуй ввести другие ингредиенты или проверь раскладку</p>
-            {% endif %}
+            </div>
+
+            <!-- СОРТИРОВКА -->
+            <form method="get" class="sort-form" id="sortForm">
+                <input type="hidden" name="q" value="{{ query }}">
+                <input type="hidden" name="name" value="{{ name }}">
+                <input type="hidden" name="category" value="{{ selected_category }}">
+                <input type="hidden" name="difficulty" value="{{ selected_difficulty }}">
+                <input type="hidden" name="time_max" value="{{ time_max }}">
+
+                <label class="sort-label">Сортировка:</label>
+                <select name="sort" class="form-input sort-select" onchange="document.getElementById('sortForm').submit();">
+                    <option value="new" {% if sort == 'new' %}selected{% endif %}>Сначала новые</option>
+                    {% if query %}
+                        <option value="match" {% if sort == 'match' %}selected{% endif %}>По совпадению</option>
+                    {% endif %}
+                    <option value="likes" {% if sort == 'likes' %}selected{% endif %}>По лайкам</option>
+                    <option value="views" {% if sort == 'views' %}selected{% endif %}>По просмотрам</option>
+                    <option value="time_asc" {% if sort == 'time_asc' %}selected{% endif %}>Время ↑</option>
+                    <option value="time_desc" {% if sort == 'time_desc' %}selected{% endif %}>Время ↓</option>
+                </select>
+            </form>
         </div>
 
-        {% if results %}
+        {% if page_obj.object_list %}
             <div class="recipes-grid">
-                {% for recipe in results %}
+                {% for recipe in page_obj %}
                     <a href="{% url 'recipe_detail' recipe.slug %}" class="recipe-card recipe-card--search">
                         <div class="recipe-card__image">
                             {% if recipe.image %}
@@ -58,49 +125,79 @@
                             {% else %}
                                 <div class="recipe-card__placeholder">🍲</div>
                             {% endif %}
-                            <div class="match-badge {% if recipe.match_percent >= 80 %}match-badge--high{% elif recipe.match_percent >= 50 %}match-badge--medium{% else %}match-badge--low{% endif %}">
-                                {{ recipe.match_percent }}%
-                            </div>
+
+                            {% if recipe.match_percent %}
+                                <div class="match-badge {% if recipe.match_percent >= 80 %}match-badge--high{% elif recipe.match_percent >= 50 %}match-badge--medium{% else %}match-badge--low{% endif %}">
+                                    {{ recipe.match_percent }}%
+                                </div>
+                            {% endif %}
                         </div>
                         <div class="recipe-card__body">
                             <h3 class="recipe-card__title">{{ recipe.title }}</h3>
                             <p class="recipe-card__desc">{{ recipe.description|truncatewords:12 }}</p>
 
-                            <div class="recipe-match">
-                                <div class="recipe-match__bar">
-                                    <div class="recipe-match__fill" style="width: {{ recipe.match_percent }}%;"></div>
+                            {% if recipe.match_percent %}
+                                <div class="recipe-match">
+                                    <div class="recipe-match__bar">
+                                        <div class="recipe-match__fill" style="width: {{ recipe.match_percent }}%;"></div>
+                                    </div>
+                                    <div class="recipe-match__text">
+                                        {{ recipe.matched_count }} из {{ recipe.total_count }} ингредиентов
+                                    </div>
                                 </div>
-                                <div class="recipe-match__text">
-                                    {{ recipe.matched_count }} из {{ recipe.total_count }} ингредиентов
-                                </div>
-                            </div>
 
-                            {% if recipe.missing %}
-                                <div class="recipe-missing">
-                                    <span class="recipe-missing__label">Не хватает:</span>
-                                    {{ recipe.missing|join:", " }}
-                                    {% if recipe.total_count > 5 %}<span class="recipe-missing__more">...</span>{% endif %}
-                                </div>
+                                {% if recipe.missing %}
+                                    <div class="recipe-missing">
+                                        <span class="recipe-missing__label">Не хватает:</span>
+                                        {{ recipe.missing|join:", " }}
+                                    </div>
+                                {% endif %}
                             {% endif %}
 
                             <div class="recipe-card__meta">
                                 <span>⏱ {{ recipe.cooking_time }} мин</span>
-                                <span class="nick-{{ recipe.author.nickname_style }}">{{ recipe.author.username }}</span>
+                                <span>❤️ {{ recipe.likes.count }}</span>
                             </div>
                         </div>
                     </a>
                 {% endfor %}
             </div>
-        {% elif query %}
+
+            <!-- ПАГИНАЦИЯ -->
+            {% if page_obj.has_other_pages %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?q={{ query }}&name={{ name }}&category={{ selected_category }}&difficulty={{ selected_difficulty }}&time_max={{ time_max }}&sort={{ sort }}&page={{ page_obj.previous_page_number }}">← Назад</a>
+                    {% endif %}
+
+                    <span class="pagination__current">
+                        Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?q={{ query }}&name={{ name }}&category={{ selected_category }}&difficulty={{ selected_difficulty }}&time_max={{ time_max }}&sort={{ sort }}&page={{ page_obj.next_page_number }}">Вперед →</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
             <div class="empty-state">
                 <div class="empty-state__icon">🔍</div>
                 <h3 class="empty-state__title">Ничего не нашлось</h3>
                 <p class="empty-state__text">
-                    Попробуй ввести другие ингредиенты. Например: «курица», «картошка», «сыр».
+                    Попробуй изменить фильтры или ввести другие ингредиенты.
                 </p>
-                <a href="{% url 'home' %}" class="btn btn--primary">Вернуться на главную</a>
+                <a href="{% url 'search_recipes' %}" class="btn btn--primary">Сбросить фильтры</a>
             </div>
         {% endif %}
+
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state__icon">🍽️</div>
+            <h3 class="empty-state__title">Что будем готовить?</h3>
+            <p class="empty-state__text">
+                Введи ингредиенты, которые есть дома, или воспользуйся фильтрами.
+            </p>
+        </div>
     {% endif %}
 
 </div>
