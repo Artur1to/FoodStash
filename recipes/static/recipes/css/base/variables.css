@@ -1,0 +1,24 @@
+:root {
+    --bg: #f7f6f3;
+    --bg-card: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #6b6b6b;
+    --text-light: #9a9a9a;
+    --border: #ececec;
+    --primary: #ff7a3d;
+    --primary-hover: #f06a2d;
+    --primary-soft: #fff3ec;
+    --green: #4caf50;
+    --radius-sm: 10px;
+    --radius: 16px;
+    --radius-lg: 24px;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+
+    /* Градиенты проекта */
+    --gradient-warm: linear-gradient(135deg, #fff3ec 0%, #ffe6d5 100%);
+    --gradient-primary: linear-gradient(135deg, var(--primary) 0%, #ff9d6e 100%);
+    --gradient-banner: linear-gradient(135deg, #ff7a3d 0%, #ff9d6e 50%, #ffb88c 100%);
+    --gradient-card-top: linear-gradient(135deg, #fff9f5 0%, #fff3ec 100%);
+}

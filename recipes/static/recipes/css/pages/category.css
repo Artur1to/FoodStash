@@ -1,0 +1,54 @@
+/* ===== СТРАНИЦЫ КАТЕГОРИЙ ===== */
+
+/* Заголовок страницы категории */
+.category-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 24px 0 40px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+}
+
+.category-header__icon {
+    width: 88px;
+    height: 88px;
+    border-radius: var(--radius-lg);
+    background: var(--gradient-warm, linear-gradient(135deg, #fff3ec 0%, #ffe6d5 100%));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
+    flex-shrink: 0;
+}
+
+.category-header__title {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+}
+
+.category-header__count {
+    font-size: 15px;
+    color: var(--text-muted);
+}
+
+/* Адаптив заголовка категории */
+@media (max-width: 700px) {
+    .category-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+    }
+
+    .category-header__icon {
+        width: 72px;
+        height: 72px;
+        font-size: 36px;
+    }
+
+    .category-header__title {
+        font-size: 26px;
+    }
+}

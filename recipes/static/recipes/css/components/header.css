@@ -1,0 +1,127 @@
+/* ===== HEADER ===== */
+.header {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 68px;
+    gap: 32px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+}
+
+.logo__icon {
+    font-size: 24px;
+}
+
+.logo--sm .logo__icon {
+    font-size: 20px;
+}
+
+.logo--sm {
+    font-size: 18px;
+}
+
+.header-search {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+    max-width: 480px;
+}
+
+.header-search__input {
+    flex: 1;
+    height: 42px;
+    padding: 0 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.header-search__input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.header-search__btn {
+    height: 42px;
+    padding: 0 20px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.header-search__btn:hover {
+    background: var(--primary-hover);
+}
+
+.header__nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+.header__link {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: color 0.2s;
+}
+
+.header__link:hover {
+    color: var(--text);
+}
+
+.header__link--muted {
+    color: var(--text-light);
+}
+
+/* Адаптив header */
+@media (max-width: 900px) {
+    .header__inner {
+        flex-wrap: wrap;
+        height: auto;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        gap: 12px;
+    }
+
+    .header-search {
+        order: 3;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+    }
+
+    .header__nav {
+        margin-left: auto;
+    }
+}

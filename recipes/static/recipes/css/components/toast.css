@@ -1,0 +1,51 @@
+/* ===== ТОСТ УВЕДОМЛЕНИЙ (АЧИВКИ) ===== */
+.achievement-toast {
+    position: fixed;
+    top: 80px;
+    right: 24px;
+    max-width: 360px;
+    padding: 20px 24px;
+    background: #fff;
+    border: 2px solid var(--primary);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 32px rgba(255, 122, 61, 0.2);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateX(400px);
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.achievement-toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.achievement-toast__title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.achievement-toast__item {
+    font-size: 14px;
+    color: var(--text);
+    padding: 6px 0;
+    border-top: 1px solid var(--border);
+    line-height: 1.4;
+}
+
+.achievement-toast__item:first-of-type {
+    border-top: none;
+}
+
+@media (max-width: 500px) {
+    .achievement-toast {
+        top: 16px;
+        right: 16px;
+        left: 16px;
+        max-width: none;
+    }
+}

@@ -1,0 +1,73 @@
+/* ===== ФОРМА ДОБАВЛЕНИЯ / РЕДАКТИРОВАНИЯ РЕЦЕПТА ===== */
+.recipe-form {
+    padding-bottom: 60px;
+}
+
+.recipe-form__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+.recipe-form__col,
+.recipe-form__steps {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow-sm);
+}
+
+.recipe-form__col .recipe-section-title,
+.recipe-form__steps .recipe-section-title {
+    margin-bottom: 20px;
+}
+
+.recipe-form__steps {
+    margin-bottom: 32px;
+}
+
+.recipe-form__actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+}
+
+/* Ингредиенты в форме */
+.ingredient-row {
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--border);
+}
+
+.ingredient-row:last-child {
+    border-bottom: none;
+}
+
+.ingredient-row__inner {
+    display: grid;
+    grid-template-columns: 1fr 100px auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.ingredient-row__delete {
+    padding-bottom: 12px;
+}
+
+.ingredient-row .form-group {
+    margin: 0;
+}
+
+/* Адаптив формы рецепта */
+@media (max-width: 900px) {
+    .recipe-form__grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .ingredient-row__inner {
+        grid-template-columns: 1fr;
+    }
+}

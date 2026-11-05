@@ -1,0 +1,46 @@
+/* ===== БЕЙДЖИ ===== */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.badge--category {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.badge--difficulty {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+/* Бейджи совпадения (в результатах поиска) */
+.match-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1;
+}
+
+.match-badge--high {
+    background: rgba(76, 175, 80, 0.95);
+}
+
+.match-badge--medium {
+    background: rgba(255, 152, 0, 0.95);
+}
+
+.match-badge--low {
+    background: rgba(158, 158, 158, 0.95);
+}
