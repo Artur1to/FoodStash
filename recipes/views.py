@@ -139,6 +139,7 @@ def recipe_detail(request, slug):
         likes = comment.votes.filter(vote_type='like').count()
         dislikes = comment.votes.filter(vote_type='dislike').count()
         comments_data.append({
+            'comment': comment,
             'obj': comment,
             'likes': likes,
             'dislikes': dislikes,
@@ -156,6 +157,10 @@ def recipe_detail(request, slug):
         code__in=request.session.pop('unlocked_achievements', [])
     )
 
+    user_rating = recipe.user_rating(request.user) if request.user.is_authenticated else 0
+    avg_rating = recipe.average_rating()
+    ratings_count = recipe.ratings_count()
+
     return render(request, 'recipes/recipe_detail.html', {
         'recipe': recipe,
         'ingredients': ingredients,
@@ -164,8 +169,11 @@ def recipe_detail(request, slug):
         'is_favorite': is_favorite,
         'is_liked': is_liked,
         'likes_count': recipe.likes.count(),
+        'user_rating': user_rating,
+        'avg_rating': avg_rating,
+        'ratings_count': ratings_count,
         'sort': sort,
-        'new_achievements_toast': new_achievements_toast,   # ← ВОТ ЭТА СТРОКА
+        'new_achievements_toast': new_achievements_toast,
     })
 
 
@@ -223,12 +231,71 @@ def category_list(request):
     return render(request, 'recipes/category_list.html', {'categories': categories})
 
 
+
+
+@require_POST
+def rate_recipe(request, recipe_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'auth_required'}, status=401)
+    try:
+        value = int(request.POST.get('value', 0))
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'invalid_value'}, status=400)
+    if not (1 <= value <= 5):
+        return JsonResponse({'error': 'out_of_range'}, status=400)
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    Rating.objects.update_or_create(
+        user=request.user,
+        recipe=recipe,
+        defaults={'value': value}
+    )
+    return JsonResponse({
+        'status': 'ok',
+        'user_rating': value,
+        'avg_rating': recipe.average_rating(),
+        'ratings_count': recipe.ratings_count(),
+    })
+
+
+def random_recipe(request):
+    recipe = Recipe.objects.order_by('?').first()
+    if recipe:
+        return redirect('recipe_detail', slug=recipe.slug)
+    return redirect('home')
+
 def category_detail(request, slug):
     category = get_object_or_404(Category, slug=slug)
-    recipes = Recipe.objects.filter(category=category).order_by('-created_at')
+    difficulty = request.GET.get('difficulty', '')
+    time_max = request.GET.get('time_max', '')
+    sort = request.GET.get('sort', 'new')
+
+    recipes = list(Recipe.objects.filter(category=category).select_related('author', 'category').prefetch_related('likes', 'ratings'))
+
+    if difficulty in ('easy', 'medium', 'hard'):
+        recipes = [r for r in recipes if r.difficulty == difficulty]
+    if time_max and time_max.isdigit():
+        recipes = [r for r in recipes if r.cooking_time <= int(time_max)]
+
+    if sort == 'rating':
+        recipes = sorted(recipes, key=lambda r: r.average_rating(), reverse=True)
+    elif sort == 'likes':
+        recipes = sorted(recipes, key=lambda r: r.likes.count(), reverse=True)
+    elif sort == 'views':
+        recipes = sorted(recipes, key=lambda r: r.views_count, reverse=True)
+    elif sort == 'time_asc':
+        recipes = sorted(recipes, key=lambda r: r.cooking_time)
+    elif sort == 'time_desc':
+        recipes = sorted(recipes, key=lambda r: r.cooking_time, reverse=True)
+    else:
+        recipes = sorted(recipes, key=lambda r: r.created_at, reverse=True)
+
     return render(request, 'recipes/category_detail.html', {
         'category': category,
         'recipes': recipes,
+        'selected_difficulty': difficulty,
+        'time_max': time_max,
+        'sort': sort,
+        'has_filters': any([difficulty, time_max, sort != 'new']),
     })
 
 def recipe_add(request):
@@ -465,7 +532,9 @@ def search_recipes(request):
                 recipes = []
 
     # === СОРТИРОВКА ===
-    if sort == 'likes':
+    if sort == 'rating':
+        recipes = sorted(recipes, key=lambda r: r.average_rating(), reverse=True)
+    elif sort == 'likes':
         recipes = sorted(recipes, key=lambda r: r.likes.count(), reverse=True)
     elif sort == 'views':
         recipes = sorted(recipes, key=lambda r: r.views_count, reverse=True)

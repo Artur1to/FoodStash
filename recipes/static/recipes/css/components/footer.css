@@ -1,6 +1,6 @@
 /* ===== FOOTER ===== */
 .footer {
-    background: #fff;
+    background: var(--bg-card);
     border-top: 1px solid var(--border);
     padding: 60px 0 32px;
     margin-top: 80px;

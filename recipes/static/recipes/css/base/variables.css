@@ -1,6 +1,10 @@
+/* ===== ПЕРЕМЕННЫЕ И ДИЗАЙН-СИСТЕМА ===== */
+
+/* Светлая тема (по умолчанию) */
 :root {
     --bg: #f7f6f3;
     --bg-card: #ffffff;
+    --bg-input: #ffffff;
     --text: #1a1a1a;
     --text-muted: #6b6b6b;
     --text-light: #9a9a9a;
@@ -21,4 +25,29 @@
     --gradient-primary: linear-gradient(135deg, var(--primary) 0%, #ff9d6e 100%);
     --gradient-banner: linear-gradient(135deg, #ff7a3d 0%, #ff9d6e 50%, #ffb88c 100%);
     --gradient-card-top: linear-gradient(135deg, #fff9f5 0%, #fff3ec 100%);
+}
+
+/* Тёмная тема */
+html.dark,
+body.dark {
+    --bg: #121214;
+    --bg-card: #1c1c20;
+    --bg-input: #232328;
+    --text: #f0f0f4;
+    --text-muted: #a2a2ae;
+    --text-light: #72727e;
+    --border: #2c2c34;
+    --primary: #ff7a3d;
+    --primary-hover: #ff915c;
+    --primary-soft: #38241c;
+    --green: #4caf50;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 10px 32px rgba(0, 0, 0, 0.6);
+
+    /* Тёмные адаптации градиентов */
+    --gradient-warm: linear-gradient(135deg, #2a221c 0%, #1e1a17 100%);
+    --gradient-primary: linear-gradient(135deg, var(--primary) 0%, #e06028 100%);
+    --gradient-banner: linear-gradient(135deg, #a64219 0%, #7d2c0b 50%, #521903 100%);
+    --gradient-card-top: linear-gradient(135deg, #26211e 0%, #1c1c20 100%);
 }

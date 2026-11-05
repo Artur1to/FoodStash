@@ -71,6 +71,25 @@ class Recipe(models.Model):
     views_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # КБЖУ (на 1 порцию)
+    calories = models.PositiveIntegerField(null=True, blank=True, help_text='Калории на порцию (ккал)')
+    proteins = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True, help_text='Белки на порцию (г)')
+    fats = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True, help_text='Жиры на порцию (г)')
+    carbs = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True, help_text='Углеводы на порцию (г)')
+
+    def average_rating(self):
+        val = self.ratings.aggregate(models.Avg('value'))['value__avg']
+        return round(val, 1) if val is not None else 0
+
+    def ratings_count(self):
+        return self.ratings.count()
+
+    def user_rating(self, user):
+        if not user or not user.is_authenticated:
+            return 0
+        r = self.ratings.filter(user=user).first()
+        return r.value if r else 0
+
     def save(self, *args, **kwargs):
         if not self.slug:
             base_slug = slugify(unidecode(self.title))
@@ -116,7 +135,7 @@ class Favorite(models.Model):
 
 class Rating(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='ratings')
     value = models.PositiveSmallIntegerField()
 
     class Meta:

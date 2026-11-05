@@ -107,10 +107,11 @@
                     {% if query %}
                         <option value="match" {% if sort == 'match' %}selected{% endif %}>По совпадению</option>
                     {% endif %}
-                    <option value="likes" {% if sort == 'likes' %}selected{% endif %}>По лайкам</option>
-                    <option value="views" {% if sort == 'views' %}selected{% endif %}>По просмотрам</option>
-                    <option value="time_asc" {% if sort == 'time_asc' %}selected{% endif %}>Время ↑</option>
-                    <option value="time_desc" {% if sort == 'time_desc' %}selected{% endif %}>Время ↓</option>
+                    <option value="rating" {% if sort == 'rating' %}selected{% endif %}>По рейтингу ★</option>
+                    <option value="likes" {% if sort == 'likes' %}selected{% endif %}>По лайкам ❤️</option>
+                    <option value="views" {% if sort == 'views' %}selected{% endif %}>По просмотрам 👁</option>
+                    <option value="time_asc" {% if sort == 'time_asc' %}selected{% endif %}>Быстрее (время ↑)</option>
+                    <option value="time_desc" {% if sort == 'time_desc' %}selected{% endif %}>Дольше (время ↓)</option>
                 </select>
             </form>
         </div>
@@ -156,6 +157,9 @@
 
                             <div class="recipe-card__meta">
                                 <span>⏱ {{ recipe.cooking_time }} мин</span>
+                                {% if recipe.average_rating %}
+                                    <span style="color:#f59e0b;font-weight:600;">★ {{ recipe.average_rating }}</span>
+                                {% endif %}
                                 <span>❤️ {{ recipe.likes.count }}</span>
                             </div>
                         </div>
@@ -179,25 +183,16 @@
                     {% endif %}
                 </div>
             {% endif %}
+
         {% else %}
             <div class="empty-state">
                 <div class="empty-state__icon">🔍</div>
-                <h3 class="empty-state__title">Ничего не нашлось</h3>
-                <p class="empty-state__text">
-                    Попробуй изменить фильтры или ввести другие ингредиенты.
-                </p>
-                <a href="{% url 'search_recipes' %}" class="btn btn--primary">Сбросить фильтры</a>
+                <h3 class="empty-state__title">Ничего не найдено</h3>
+                <p class="empty-state__text">Попробуй изменить список ингредиентов или сбросить фильтры.</p>
+                <a href="{% url 'search_recipes' %}" class="btn btn--primary">Сбросить поиск</a>
             </div>
         {% endif %}
 
-    {% else %}
-        <div class="empty-state">
-            <div class="empty-state__icon">🍽️</div>
-            <h3 class="empty-state__title">Что будем готовить?</h3>
-            <p class="empty-state__text">
-                Введи ингредиенты, которые есть дома, или воспользуйся фильтрами.
-            </p>
-        </div>
     {% endif %}
 
 </div>

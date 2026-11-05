@@ -89,6 +89,9 @@
                     <p class="recipe-card__desc">{{ recipe.description|truncatewords:12 }}</p>
                     <div class="recipe-card__meta">
                         <span>⏱ {{ recipe.cooking_time }} мин</span>
+                        {% if recipe.average_rating %}
+                            <span style="color:#f59e0b;font-weight:600;">★ {{ recipe.average_rating }}</span>
+                        {% endif %}
                         <span>❤️ {{ recipe.likes.count }}</span>
                     </div>
                 </div>

@@ -5,7 +5,8 @@
     align-items: center;
     text-align: center;
     padding: 80px 24px;
-    background: #fff;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
 }

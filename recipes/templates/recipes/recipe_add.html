@@ -61,6 +61,28 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="form-label">Пищевая ценность на 1 порцию (необязательно)</label>
+                    <div class="form-row form-row--kbju" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                        <div>
+                            <label class="form-label" style="font-size: 11px; color: var(--text-muted);">Калории</label>
+                            {{ form.calories }}
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 11px; color: var(--text-muted);">Белки (г)</label>
+                            {{ form.proteins }}
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 11px; color: var(--text-muted);">Жиры (г)</label>
+                            {{ form.fats }}
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 11px; color: var(--text-muted);">Углев. (г)</label>
+                            {{ form.carbs }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label class="form-label">Фото блюда</label>
                     {{ form.image }}
                 </div>

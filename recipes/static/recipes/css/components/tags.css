@@ -16,7 +16,7 @@
 
 .tag {
     padding: 6px 14px;
-    background: #fff;
+    background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 100px;
     color: var(--text-muted);

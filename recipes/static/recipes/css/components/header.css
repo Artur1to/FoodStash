@@ -6,6 +6,12 @@
     position: sticky;
     top: 0;
     z-index: 100;
+    transition: background 0.3s, border-color 0.3s;
+}
+
+html.dark .header,
+body.dark .header {
+    background: rgba(20, 20, 24, 0.85);
 }
 
 .header__inner {
@@ -53,6 +59,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--bg);
+    color: var(--text);
     font-size: 14px;
     font-family: inherit;
     transition: all 0.2s;
@@ -61,7 +68,7 @@
 .header-search__input:focus {
     outline: none;
     border-color: var(--primary);
-    background: #fff;
+    background: var(--bg-card);
     box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
@@ -85,7 +92,7 @@
 .header__nav {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 18px;
     flex-shrink: 0;
 }
 
@@ -100,8 +107,53 @@
     color: var(--text);
 }
 
+.header__link--random {
+    color: var(--primary);
+    font-weight: 600;
+}
+
 .header__link--muted {
     color: var(--text-light);
+}
+
+/* Кнопка переключения темы */
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+    color: var(--text);
+    flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+    border-color: var(--primary);
+    transform: rotate(15deg);
+}
+
+.theme-toggle__icon--sun {
+    display: none;
+}
+
+.theme-toggle__icon--moon {
+    display: inline-block;
+}
+
+html.dark .theme-toggle__icon--sun,
+body.dark .theme-toggle__icon--sun {
+    display: inline-block;
+}
+
+html.dark .theme-toggle__icon--moon,
+body.dark .theme-toggle__icon--moon {
+    display: none;
 }
 
 /* Адаптив header */

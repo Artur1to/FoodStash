@@ -2,7 +2,8 @@
 
 /* Карточка заголовка профиля */
 .profile-header-card {
-    background: #fff;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
@@ -102,7 +103,8 @@
 .profile-achievements {
     margin: 32px 0 24px;
     padding: 24px;
-    background: #fff;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
 }

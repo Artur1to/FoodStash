@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User
+from .models import User, Recipe, RecipeIngredient
 
 
 class RegisterForm(UserCreationForm):
@@ -29,13 +29,15 @@ class UserForm(forms.ModelForm):
         }
 
 
-from .models import Recipe, RecipeIngredient
-
-
 class RecipeForm(forms.ModelForm):
     class Meta:
         model = Recipe
-        fields = ['title', 'description', 'category', 'image', 'cooking_time', 'servings', 'difficulty', 'steps']
+        fields = [
+            'title', 'description', 'category', 'image',
+            'cooking_time', 'servings', 'difficulty',
+            'calories', 'proteins', 'fats', 'carbs',
+            'steps'
+        ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Например: Куриный суп'}),
             'description': forms.Textarea(attrs={'rows': 2, 'class': 'form-input', 'placeholder': 'Краткое описание (необязательно)'}),
@@ -43,6 +45,10 @@ class RecipeForm(forms.ModelForm):
             'cooking_time': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': '30'}),
             'servings': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': '2'}),
             'difficulty': forms.Select(attrs={'class': 'form-input'}),
+            'calories': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'ккал на порцию', 'min': 0}),
+            'proteins': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'г', 'step': '0.1', 'min': 0}),
+            'fats': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'г', 'step': '0.1', 'min': 0}),
+            'carbs': forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'г', 'step': '0.1', 'min': 0}),
             'steps': forms.Textarea(attrs={'rows': 8, 'class': 'form-input', 'placeholder': 'Опиши шаги приготовления. Каждый шаг — с новой строки.'}),
         }
 

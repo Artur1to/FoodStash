@@ -154,7 +154,8 @@
 
 /* Ингредиенты и порции */
 .recipe-ingredients {
-    background: #fff;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 24px;
     height: fit-content;
@@ -179,7 +180,8 @@
     height: 32px;
     border-radius: 50%;
     border: 1px solid var(--border);
-    background: #fff;
+    background: var(--bg);
+    color: var(--text);
     font-size: 18px;
     cursor: pointer;
     transition: all 0.2s;
@@ -288,7 +290,8 @@
 .comments-sort {
     display: flex;
     gap: 4px;
-    background: #fff;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     padding: 4px;
     border-radius: 100px;
     box-shadow: var(--shadow-sm);
@@ -331,7 +334,8 @@
     display: flex;
     gap: 16px;
     padding: 20px;
-    background: #fff;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
 }
@@ -448,4 +452,124 @@
         flex-wrap: wrap;
         gap: 16px;
     }
+}
+
+
+/* ===== ВИДЖЕТ РЕЙТИНГА СО ЗВЁЗДАМИ ===== */
+.recipe-rating {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 4px 0 8px;
+}
+
+.stars-list {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.star-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 24px;
+    line-height: 1;
+    color: #d1d5db;
+    cursor: pointer;
+    transition: transform 0.15s, color 0.15s;
+}
+
+.star-btn:hover {
+    transform: scale(1.2);
+}
+
+.star-btn.active,
+.star-btn.hovered {
+    color: #f59e0b;
+}
+
+.rating-info {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.rating-score {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.rating-count {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.rating-hint {
+    font-size: 13px;
+    color: var(--text-light);
+    margin-left: 4px;
+}
+
+.rating-hint a {
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+/* ===== ВИДЖЕТ КБЖУ ===== */
+.nutrition-box {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--border);
+}
+
+.nutrition-box__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.nutrition-box__title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.nutrition-box__badge {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--bg);
+    padding: 2px 8px;
+    border-radius: 100px;
+}
+
+.nutrition-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.nutrition-pill {
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: background 0.2s;
+}
+
+.nutrition-pill__val {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.nutrition-pill__lbl {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }

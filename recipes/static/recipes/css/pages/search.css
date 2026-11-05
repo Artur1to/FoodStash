@@ -16,7 +16,8 @@
     padding: 0 24px;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    background: #fff;
+    background: var(--bg-card);
+    color: var(--text);
     font-size: 16px;
     font-family: inherit;
     box-shadow: var(--shadow-sm);
@@ -124,9 +125,9 @@
     color: var(--text-light);
     line-height: 1.4;
     padding: 8px 10px;
-    background: #fafafa;
+    background: var(--bg);
     border-radius: 8px;
-    border-left: 3px solid #e0e0e0;
+    border-left: 3px solid var(--border);
     margin-bottom: 12px;
     text-align: left;
 }

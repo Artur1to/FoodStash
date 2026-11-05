@@ -18,19 +18,48 @@
         <div>
             <h1 class="category-header__title">{{ category.name }}</h1>
             <p class="category-header__count">
-                {{ recipes.count }}
-                {% if recipes.count|divisibleby:10 and recipes.count != 11 and recipes.count != 12 and recipes.count != 13 and recipes.count != 14 %}
-                    рецептов
-                {% elif recipes.count == 1 %}
-                    рецепт
-                {% elif recipes.count >= 2 and recipes.count <= 4 %}
-                    рецепта
-                {% else %}
-                    рецептов
-                {% endif %}
+                Всего рецептов: {{ recipes|length }}
             </p>
         </div>
     </div>
+
+    <!-- УМНЫЕ ФИЛЬТРЫ И СОРТИРОВКА -->
+    <form method="get" class="filters" id="categoryFiltersForm">
+        <div class="filters__row">
+            <div class="filters__item">
+                <label class="filters__label">Сложность</label>
+                <select name="difficulty" class="form-input" onchange="document.getElementById('categoryFiltersForm').submit();">
+                    <option value="">Любая сложность</option>
+                    <option value="easy" {% if selected_difficulty == 'easy' %}selected{% endif %}>Легко</option>
+                    <option value="medium" {% if selected_difficulty == 'medium' %}selected{% endif %}>Средне</option>
+                    <option value="hard" {% if selected_difficulty == 'hard' %}selected{% endif %}>Сложно</option>
+                </select>
+            </div>
+
+            <div class="filters__item">
+                <label class="filters__label">Время готовки, до (мин)</label>
+                <input type="number" name="time_max" min="1" max="999" class="form-input" value="{{ time_max }}" placeholder="например: 30" onchange="document.getElementById('categoryFiltersForm').submit();">
+            </div>
+
+            <div class="filters__item">
+                <label class="filters__label">Сортировка</label>
+                <select name="sort" class="form-input" onchange="document.getElementById('categoryFiltersForm').submit();">
+                    <option value="new" {% if sort == 'new' %}selected{% endif %}>Сначала новые</option>
+                    <option value="rating" {% if sort == 'rating' %}selected{% endif %}>По рейтингу ★</option>
+                    <option value="likes" {% if sort == 'likes' %}selected{% endif %}>По лайкам ❤️</option>
+                    <option value="views" {% if sort == 'views' %}selected{% endif %}>По просмотрам 👁</option>
+                    <option value="time_asc" {% if sort == 'time_asc' %}selected{% endif %}>Быстрее (время ↑)</option>
+                    <option value="time_desc" {% if sort == 'time_desc' %}selected{% endif %}>Дольше (время ↓)</option>
+                </select>
+            </div>
+
+            {% if has_filters %}
+                <div class="filters__item filters__item--btn">
+                    <a href="{% url 'category_detail' category.slug %}" class="btn btn--outline">Сбросить фильтры</a>
+                </div>
+            {% endif %}
+        </div>
+    </form>
 
     <!-- СЕТКА РЕЦЕПТОВ -->
     {% if recipes %}
@@ -49,6 +78,10 @@
                         <p class="recipe-card__desc">{{ recipe.description|truncatewords:12 }}</p>
                         <div class="recipe-card__meta">
                             <span>⏱ {{ recipe.cooking_time }} мин</span>
+                            {% if recipe.average_rating %}
+                                <span style="color:#f59e0b;font-weight:600;">★ {{ recipe.average_rating }}</span>
+                            {% endif %}
+                            <span>❤️ {{ recipe.likes.count }}</span>
                             <span>👤 <span class="nick-{{ recipe.author.nickname_style }}">{{ recipe.author.username }}</span></span>
                         </div>
                     </div>
@@ -58,9 +91,19 @@
     {% else %}
         <div class="empty-state">
             <div class="empty-state__icon">🍽️</div>
-            <h3 class="empty-state__title">В этой категории пока пусто</h3>
-            <p class="empty-state__text">Стань первым, кто добавит рецепт сюда!</p>
-            <a href="/recipe/add/" class="btn btn--primary">Добавить рецепт</a>
+            <h3 class="empty-state__title">Рецептов не найдено</h3>
+            <p class="empty-state__text">
+                {% if has_filters %}
+                    Попробуй изменить или сбросить фильтры.
+                {% else %}
+                    Стань первым, кто добавит рецепт сюда!
+                {% endif %}
+            </p>
+            {% if has_filters %}
+                <a href="{% url 'category_detail' category.slug %}" class="btn btn--outline">Сбросить фильтры</a>
+            {% else %}
+                <a href="/recipe/add/" class="btn btn--primary">Добавить рецепт</a>
+            {% endif %}
         </div>
     {% endif %}
 

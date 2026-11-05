@@ -5,6 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}FoodStash — рецепты из того, что есть{% endblock %}</title>
+    
+    <!-- Моментальная инициализация темы до рендеринга для предотвращения мерцания -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('foodstash_theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+
     <link rel="stylesheet" href="{% static 'recipes/css/style.css' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,11 +37,13 @@
         </form>
 
         <nav class="header__nav">
+            <a href="{% url 'random_recipe' %}" class="header__link header__link--random" title="Случайный рецепт">🎲 Случайный</a>
             {% if user.is_authenticated %}
                 <a href="{% url 'feed' %}" class="header__link">Лента</a>
             {% endif %}
             <a href="{% url 'leaderboard' %}" class="header__link">Лидеры</a>
             <a href="{% url 'category_list' %}" class="header__link">Категории</a>
+            
             {% if user.is_authenticated %}
                 <a href="{% url 'profile' user.username %}" class="header__link nick-{{ user.nickname_style }}">{{ user.username }}</a>
                 <form action="{% url 'logout' %}" method="post" style="display:inline;">
@@ -40,6 +54,12 @@
                 <a href="{% url 'login' %}" class="header__link">Войти</a>
                 <a href="{% url 'register' %}" class="btn btn--primary btn--sm">Регистрация</a>
             {% endif %}
+
+            <!-- ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ -->
+            <button type="button" class="theme-toggle" id="themeToggleBtn" aria-label="Переключить тему" title="Светлая / Тёмная тема">
+                <span class="theme-toggle__icon theme-toggle__icon--moon">🌙</span>
+                <span class="theme-toggle__icon theme-toggle__icon--sun">☀️</span>
+            </button>
         </nav>
     </div>
 </header>
@@ -61,7 +81,8 @@
             <h4 class="footer__title">Разделы</h4>
             <a href="/" class="footer__link">Главная</a>
             <a href="{% url 'category_list' %}" class="footer__link">Все категории</a>
-            <a href="/search/" class="footer__link">Поиск по ингредиентам</a>
+            <a href="{% url 'search_recipes' %}" class="footer__link">Поиск по ингредиентам</a>
+            <a href="{% url 'random_recipe' %}" class="footer__link">🎲 Случайный рецепт</a>
         </div>
         <div class="footer__col">
             <h4 class="footer__title">О проекте</h4>
@@ -76,6 +97,22 @@
         </div>
     </div>
 </footer>
+
+<script>
+// Переключатель светлой и тёмной темы
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.toggle('dark');
+        document.body.classList.toggle('dark', isDark);
+        localStorage.setItem('foodstash_theme', isDark ? 'dark' : 'light');
+    });
+}
+// Синхронизируем класс на body при загрузке DOM
+if (document.documentElement.classList.contains('dark')) {
+    document.body.classList.add('dark');
+}
+</script>
 
 </body>
 </html>

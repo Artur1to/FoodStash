@@ -18,14 +18,17 @@ urlpatterns = [
     path('profile/edit/', views.profile_edit, name='profile_edit'),
     path('profile/<str:username>/', views.profile_view, name='profile'),
 
-    path('recipe/<int:recipe_id>/favorite/', views.toggle_favorite, name='toggle_favorite'),
-    path('recipe/<int:recipe_id>/like/', views.toggle_like, name='toggle_like'),
-    path('recipe/<int:recipe_id>/comment/', views.add_comment, name='add_comment'),
-
-    path('comment/<int:comment_id>/vote/', views.vote_comment, name='vote_comment'),
+    # Случайный рецепт (должен быть ДО slug)
+    path('recipe/random/', views.random_recipe, name='random_recipe'),
 
     path('recipe/add/', views.recipe_add, name='recipe_add'),
+    path('recipe/<int:recipe_id>/favorite/', views.toggle_favorite, name='toggle_favorite'),
+    path('recipe/<int:recipe_id>/like/', views.toggle_like, name='toggle_like'),
+    path('recipe/<int:recipe_id>/rate/', views.rate_recipe, name='rate_recipe'),
+    path('recipe/<int:recipe_id>/comment/', views.add_comment, name='add_comment'),
     path('recipe/<slug:slug>/', views.recipe_detail, name='recipe_detail'),
+
+    path('comment/<int:comment_id>/vote/', views.vote_comment, name='vote_comment'),
 
     path('categories/', views.category_list, name='category_list'),
     path('category/<slug:slug>/', views.category_detail, name='category_detail'),

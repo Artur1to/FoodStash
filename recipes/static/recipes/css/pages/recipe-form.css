@@ -12,7 +12,8 @@
 
 .recipe-form__col,
 .recipe-form__steps {
-    background: #fff;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 28px;
     box-shadow: var(--shadow-sm);
