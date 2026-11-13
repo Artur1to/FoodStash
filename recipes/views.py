@@ -98,7 +98,8 @@ def confirm_email(request, user_id, token):
         'valid': valid,
         'confirmed': confirmed,
     })
-    response['Referrer-Policy'] = 'no-referrer'
+    # Send the origin for HTTPS CSRF checks without exposing the token in the URL.
+    response['Referrer-Policy'] = 'strict-origin'
     return response
 
 

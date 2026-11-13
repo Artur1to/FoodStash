@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,16 +21,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
+def env_list(name):
+    return [item.strip() for item in os.getenv(name, '').split(',') if item.strip()]
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+ON_VERCEL = os.getenv('VERCEL_ENV') in ('production', 'preview')
+DEBUG = not ON_VERCEL and os.getenv('DJANGO_DEBUG', '1') == '1'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY') or ''
+if ON_VERCEL and not SECRET_KEY:
+    raise ImproperlyConfigured('DJANGO_SECRET_KEY is required on Vercel.')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS')
+CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS')
+if ON_VERCEL:
+    for name in ('VERCEL_URL', 'VERCEL_BRANCH_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
+        if host := os.getenv(name):
+            ALLOWED_HOSTS.append(host)
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 
 # Application definition
@@ -84,6 +96,20 @@ DATABASES = {
     }
 }
 
+postgres_url = os.getenv('FOODSTASH_DATABASE_URL')
+if ON_VERCEL:
+    postgres_url = postgres_url or os.getenv('DATABASE_URL')
+    if not postgres_url:
+        raise ImproperlyConfigured('Connect a PostgreSQL database to the Vercel deployment.')
+if postgres_url:
+    import dj_database_url
+
+    database = dj_database_url.parse(postgres_url, conn_max_age=0)
+    if database['ENGINE'] != 'django.db.backends.postgresql':
+        raise ImproperlyConfigured('FOODSTASH_DATABASE_URL must use PostgreSQL.')
+    database['DISABLE_SERVER_SIDE_CURSORS'] = True
+    DATABASES['default'] = database
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
@@ -119,7 +145,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'recipes' / 'static']
 
 
@@ -135,6 +162,8 @@ MAILERS = {
 YANDEX_SMTP_USER = os.getenv('YANDEX_SMTP_USER', '').strip()
 YANDEX_SMTP_APP_PASSWORD = os.getenv('YANDEX_SMTP_APP_PASSWORD', '')
 FOODSTASH_SITE_URL = os.getenv('FOODSTASH_SITE_URL', '').strip().rstrip('/')
+if ON_VERCEL and not FOODSTASH_SITE_URL and os.getenv('VERCEL_PROJECT_PRODUCTION_URL'):
+    FOODSTASH_SITE_URL = 'https://' + os.environ['VERCEL_PROJECT_PRODUCTION_URL']
 
 if YANDEX_SMTP_USER and YANDEX_SMTP_APP_PASSWORD:
     DEFAULT_FROM_EMAIL = f'FoodStash <{YANDEX_SMTP_USER}>'
@@ -152,6 +181,12 @@ if YANDEX_SMTP_USER and YANDEX_SMTP_APP_PASSWORD:
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+if ON_VERCEL:
+    STORAGES = {
+        'default': {'BACKEND': 'recipes.storage.VercelBlobStorage'},
+        'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+    }
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
