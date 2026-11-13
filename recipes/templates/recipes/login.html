@@ -1,34 +1,37 @@
 {% extends 'recipes/base.html' %}
 {% block title %}Вход — FoodStash{% endblock %}
+{% block header_search %}{% endblock %}
 
 {% block content %}
 <div class="auth-page">
     <div class="auth-card">
         <h1 class="auth-title">Вход</h1>
-        <p class="auth-subtitle">Рады видеть снова</p>
 
         <form method="post" class="auth-form">
             {% csrf_token %}
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
             {% if form.errors %}
-                <div class="form-error">Неправильное имя пользователя или пароль</div>
+                <div class="form-error" role="alert">Неверное имя пользователя или пароль.</div>
             {% endif %}
 
             <div class="form-group">
-                <label class="form-label">Имя пользователя</label>
-                <input type="text" name="username" class="form-input" required>
+                <label class="form-label" for="id_username">Имя пользователя</label>
+                <input type="text" id="id_username" name="username" autocomplete="username" class="form-input" value="{{ form.username.value|default_if_none:'' }}" required>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Пароль</label>
-                <input type="password" name="password" class="form-input" required>
+                <label class="form-label" for="id_password">Пароль</label>
+                <input type="password" id="id_password" name="password" autocomplete="current-password" class="form-input" required>
             </div>
 
             <button type="submit" class="btn btn--primary btn--full">Войти</button>
         </form>
 
+        <p class="auth-switch"><a href="{% url 'password_reset' %}">Забыл пароль?</a></p>
         <p class="auth-switch">
             Нет аккаунта? <a href="{% url 'register' %}">Зарегистрироваться</a>
         </p>
+        <p class="auth-switch"><a href="{% url 'resend_confirmation' %}">Получить письмо подтверждения ещё раз</a></p>
     </div>
 </div>
 {% endblock %}

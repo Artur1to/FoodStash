@@ -1,0 +1,20 @@
+{% extends 'recipes/base.html' %}
+{% block title %}Повторное письмо — FoodStash{% endblock %}
+{% block header_search %}{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <h1 class="auth-title">Запросить новое письмо</h1>
+        <p class="auth-description">Укажи имя пользователя и почту, которые ввёл при регистрации.</p>
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            {% for field in form %}
+                {% include 'recipes/includes/form_field.html' with field=field only %}
+            {% endfor %}
+            <button class="btn btn--primary btn--full" type="submit">Отправить письмо</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

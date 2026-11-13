@@ -1,9 +1,12 @@
 /* ===== ЛИДЕРБОРД ===== */
+.leaderboard-page .profile-tabs {
+    margin-top: 0;
+}
+
 .leaderboard-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding-bottom: 60px;
 }
 
 .leaderboard-row {
@@ -15,17 +18,17 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
-    transition: all 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .leaderboard-row:hover {
-    transform: translateX(4px);
+    border-color: var(--highlight-border);
     box-shadow: var(--shadow);
 }
 
 .leaderboard-row--top {
     background: var(--gradient-card-top, linear-gradient(135deg, #fff9f5 0%, #fff3ec 100%));
-    border: 1px solid #ffe0cc;
+    border-color: var(--highlight-border);
 }
 
 .leaderboard-row__rank {
@@ -58,7 +61,7 @@
     align-items: center;
     justify-content: center;
     background: var(--gradient-primary, linear-gradient(135deg, var(--primary) 0%, #ff9d6e 100%));
-    color: #fff;
+    color: var(--on-primary);
     font-weight: 700;
     font-size: 20px;
 }
@@ -87,7 +90,7 @@
 .leaderboard-row__score-value {
     font-size: 20px;
     font-weight: 700;
-    color: var(--primary);
+    color: var(--accent-text);
 }
 
 .leaderboard-row__score-label {

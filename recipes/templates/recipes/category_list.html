@@ -1,34 +1,28 @@
 {% extends 'recipes/base.html' %}
+{% load recipe_categories %}
 {% block title %}Все категории — FoodStash{% endblock %}
 
 {% block content %}
 <div class="container">
 
-    <nav class="breadcrumbs">
-        <a href="/">Главная</a>
-        <span>/</span>
-        <span class="breadcrumbs__current">Категории</span>
-    </nav>
-
     <div class="page-header">
         <h1 class="page-title">Все категории</h1>
-        <p class="page-subtitle">Выбери раздел и найди своё любимое блюдо</p>
     </div>
 
     {% if categories %}
         <div class="categories-grid">
             {% for category in categories %}
                 <a href="{% url 'category_detail' category.slug %}" class="category-tile">
-                    <div class="category-tile__icon">{{ category.icon|default:"🍽️" }}</div>
+                    <div class="category-tile__icon" aria-hidden="true">{{ category|category_icon }}</div>
                     <div class="category-tile__body">
                         <h3 class="category-tile__name">{{ category.name }}</h3>
-                        <p class="category-tile__count">{{ category.recipes.count }} рецептов</p>
+                        <p class="category-tile__count">Рецептов: {{ category.recipes.count }}</p>
                     </div>
                 </a>
             {% endfor %}
         </div>
     {% else %}
-        <p class="empty-text">Категорий пока нет. Добавь их в админке.</p>
+        <p class="empty-text">Категорий пока нет.</p>
     {% endif %}
 
 </div>

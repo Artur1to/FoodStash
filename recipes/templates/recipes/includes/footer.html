@@ -1,0 +1,40 @@
+<footer class="footer">
+    <div class="container">
+        <div class="footer__inner">
+            <div>
+                <a href="{% url 'home' %}" class="logo logo--sm">
+                    <span class="logo__icon" aria-hidden="true">🍳</span>
+                    <span class="logo__text">FoodStash</span>
+                </a>
+                <p class="footer__description">Рецепты из продуктов, которые есть дома.</p>
+            </div>
+            <nav class="footer__links" aria-labelledby="footer-recipes">
+                <h2 id="footer-recipes">Рецепты</h2>
+                <a href="{% url 'search_recipes' %}">Каталог</a>
+                <a href="{% url 'category_list' %}">Категории</a>
+                <a href="{% url 'random_recipe' %}">Случайный рецепт</a>
+                <a href="{% url 'leaderboard' %}">Лидеры</a>
+            </nav>
+            <nav class="footer__links" aria-labelledby="footer-account">
+                <h2 id="footer-account">Аккаунт</h2>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'profile' user.username %}">Мой профиль</a>
+                    <a href="{% url 'feed' %}">Моя лента</a>
+                    <a href="{% url 'profile' user.username %}?tab=favorites">Избранное</a>
+                {% else %}
+                    <a href="{% url 'login' %}">Войти</a>
+                    <a href="{% url 'register' %}">Регистрация</a>
+                {% endif %}
+                <a href="{% url 'recipe_add' %}">Добавить рецепт</a>
+            </nav>
+            <nav class="footer__links" aria-labelledby="footer-info">
+                <h2 id="footer-info">Информация</h2>
+                <a href="{% url 'about' %}">О проекте</a>
+                <a href="{% url 'terms' %}">Правила пользования</a>
+                <a href="{% url 'privacy' %}">Конфиденциальность</a>
+                <a href="{% url 'cookies' %}">Файлы cookie</a>
+            </nav>
+        </div>
+        <p class="footer__copyright">© {% now "Y" %} FoodStash · Учебный проект</p>
+    </div>
+</footer>

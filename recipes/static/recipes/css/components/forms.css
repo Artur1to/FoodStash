@@ -22,21 +22,21 @@
 .auth-title {
     font-size: 28px;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 20px;
     letter-spacing: -0.01em;
     color: var(--text);
-}
-
-.auth-subtitle {
-    font-size: 15px;
-    color: var(--text-muted);
-    margin-bottom: 28px;
 }
 
 .auth-form {
     display: flex;
     flex-direction: column;
     gap: 16px;
+}
+
+.auth-description {
+    margin-bottom: 18px;
+    font-size: 15px;
+    color: var(--text-muted);
 }
 
 .form-group {
@@ -47,7 +47,7 @@
 
 .form-label {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text);
 }
 
@@ -55,13 +55,19 @@
     width: 100%;
     height: 46px;
     padding: 0 16px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-sm);
     background: var(--bg-input);
     color: var(--text);
     font-size: 15px;
     font-family: inherit;
-    transition: all 0.2s;
+    transition: background-color 0.18s, border-color 0.18s;
+}
+
+.form-input::placeholder,
+.header-search__input::placeholder {
+    color: var(--text-light);
+    opacity: 1;
 }
 
 textarea.form-input {
@@ -71,9 +77,8 @@ textarea.form-input {
 }
 
 .form-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    background: var(--bg-card);
+    border-color: var(--accent-text);
+    background-color: var(--bg-card);
     box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
@@ -86,15 +91,23 @@ select.form-input {
     cursor: pointer;
 }
 
-input[type="file"].form-input,
-.recipe-form input[type="file"] {
+input[type="file"].form-input {
     padding: 10px;
     font-size: 14px;
 }
 
-.form-error {
+.form-error,
+.auth-form .errorlist {
     font-size: 13px;
-    color: #e53935;
+    color: var(--danger);
+}
+
+.auth-form .errorlist {
+    list-style: none;
+}
+
+.auth-form .form-input[aria-invalid="true"] {
+    border-color: var(--danger);
 }
 
 .form-section {
@@ -149,8 +162,10 @@ input[type="file"].form-input,
 }
 
 .auth-switch a {
-    color: var(--primary);
+    color: var(--accent-text);
     font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 .auth-switch a:hover {
@@ -174,6 +189,14 @@ input[type="file"].form-input,
     align-items: end;
 }
 
+.filters__summary {
+    padding-block: 12px;
+    min-height: 44px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
 .filters__item {
     display: flex;
     flex-direction: column;
@@ -189,6 +212,7 @@ input[type="file"].form-input,
 .filters__item--btn {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     gap: 8px;
     align-items: center;
 }
@@ -219,11 +243,34 @@ input[type="file"].form-input,
 }
 
 @media (max-width: 700px) {
+    .auth-page {
+        padding: 24px 16px;
+    }
+
+    .auth-card,
+    .filters {
+        padding: 18px;
+    }
+
+    .form-input {
+        min-width: 0;
+        font-size: 16px;
+    }
+
+    .auth-form .btn,
+    .filters .btn {
+        min-height: 44px;
+    }
+
     .filters__row {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .filters__item--btn {
-        flex-direction: column;
+        grid-column: 1 / -1;
         align-items: stretch;
+    }
+
+    .filters__item--btn .btn {
+        flex: 1 1 auto;
     }
 }

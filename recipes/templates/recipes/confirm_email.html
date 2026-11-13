@@ -1,0 +1,27 @@
+{% extends 'recipes/base.html' %}
+{% block title %}Подтверждение почты — FoodStash{% endblock %}
+{% block header_search %}{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        {% if confirmed %}
+            <h1 class="auth-title">Почта подтверждена</h1>
+            <p class="auth-description">Теперь можно войти в аккаунт FoodStash.</p>
+            <a class="btn btn--primary btn--full" href="{% url 'login' %}">Войти</a>
+        {% elif valid %}
+            <h1 class="auth-title">Подтверди почту</h1>
+            <p class="auth-description">После подтверждения станет доступен вход в аккаунт.</p>
+            <form method="post">
+                {% csrf_token %}
+                <button class="btn btn--primary btn--full" type="submit">Подтвердить почту</button>
+            </form>
+        {% else %}
+            <h1 class="auth-title">Ссылка недействительна</h1>
+            <p class="auth-description">Срок ссылки истёк, или адрес уже подтверждён.</p>
+            <a class="btn btn--outline btn--full" href="{% url 'resend_confirmation' %}">Запросить новое письмо</a>
+            <p class="auth-switch"><a href="{% url 'login' %}">Войти</a></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -12,27 +12,7 @@
     {% if recipes %}
         <div class="recipes-grid">
             {% for recipe in recipes %}
-                <a href="{% url 'recipe_detail' recipe.slug %}" class="recipe-card">
-                    <div class="recipe-card__image">
-                        {% if recipe.image %}
-                            <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}">
-                        {% else %}
-                            <div class="recipe-card__placeholder">🍲</div>
-                        {% endif %}
-                    </div>
-                    <div class="recipe-card__body">
-                        <h3 class="recipe-card__title">{{ recipe.title }}</h3>
-                        <p class="recipe-card__desc">{{ recipe.description|truncatewords:12 }}</p>
-                        <div class="recipe-card__meta">
-                            <span>⏱ {{ recipe.cooking_time }} мин</span>
-                            {% if recipe.average_rating %}
-                                <span style="color:#f59e0b;font-weight:600;">★ {{ recipe.average_rating }}</span>
-                            {% endif %}
-                            <span>❤️ {{ recipe.likes.count }}</span>
-                            <span class="nick-{{ recipe.author.nickname_style }}">{{ recipe.author.username }}</span>
-                        </div>
-                    </div>
-                </a>
+                {% include 'recipes/includes/recipe_card.html' with recipe=recipe rating=recipe.average_rating likes=recipe.likes.count show_author=True only %}
             {% endfor %}
         </div>
     {% else %}
@@ -42,7 +22,7 @@
             <p class="empty-state__text">
                 Подпишись на интересных авторов — и их рецепты появятся здесь.
             </p>
-            <a href="{% url 'home' %}" class="btn btn--primary">Найти авторов</a>
+            <a href="{% url 'leaderboard' %}" class="btn btn--primary">Найти авторов</a>
         </div>
     {% endif %}
 

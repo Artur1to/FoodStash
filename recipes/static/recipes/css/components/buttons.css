@@ -3,38 +3,39 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
     padding: 10px 20px;
     border: none;
-    border-radius: var(--radius);
+    border-radius: var(--radius-sm);
     font-family: inherit;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.18s, border-color 0.18s, color 0.18s;
     text-decoration: none;
+    text-align: center;
 }
 
 /* Модификаторы цвета */
 .btn--primary {
     background: var(--primary);
-    color: #fff;
+    color: var(--on-primary);
 }
 
 .btn--primary:hover {
     background: var(--primary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 122, 61, 0.3);
 }
 
 .btn--outline {
     background: transparent;
-    border: 1px solid var(--border);
+    border: 1px solid var(--control-border);
     color: var(--text);
 }
 
 .btn--outline:hover {
-    border-color: var(--primary);
-    color: var(--primary);
+    border-color: var(--accent-text);
+    color: var(--accent-text);
+    background: var(--primary-soft);
 }
 
 /* Модификаторы размера */
@@ -54,16 +55,19 @@
 
 /* Состояния: Лайк и Избранное */
 .btn--liked {
-    background: #ff4d6d;
-    color: #fff;
+    background: var(--danger-soft);
+    border-color: var(--danger);
+    color: var(--danger);
 }
 
 .btn--liked:hover {
-    background: #e63f5c;
+    background: var(--danger-soft);
+    border-color: var(--danger);
+    color: var(--danger);
 }
 
 .btn--favorited {
-    border-color: var(--primary);
-    color: var(--primary);
+    border-color: var(--accent-text);
+    color: var(--accent-text);
     background: var(--primary-soft);
 }

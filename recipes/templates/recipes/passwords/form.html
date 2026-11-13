@@ -1,0 +1,28 @@
+{% extends 'recipes/base.html' %}
+{% block title %}{{ title }} — FoodStash{% endblock %}
+{% block header_search %}{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <h1 class="auth-title">{{ title }}</h1>
+        {% if form %}
+            {% if description %}<p class="auth-description">{{ description }}</p>{% endif %}
+            <form method="post" class="auth-form">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                {% for field in form %}
+                    {% include 'recipes/includes/form_field.html' with field=field only %}
+                {% endfor %}
+                <button type="submit" class="btn btn--primary btn--full">{{ submit_label }}</button>
+            </form>
+            {% if back_route %}
+                <p class="auth-switch"><a href="{% url back_route %}">{{ back_label }}</a></p>
+            {% endif %}
+        {% else %}
+            <p class="auth-description">Ссылка для сброса пароля недействительна, уже использована или устарела.</p>
+            <a class="btn btn--outline btn--full" href="{% url 'password_reset' %}">Запросить новую ссылку</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

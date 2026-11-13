@@ -107,7 +107,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
 
@@ -132,11 +132,30 @@ MAILERS = {
     },
 }
 
+YANDEX_SMTP_USER = os.getenv('YANDEX_SMTP_USER', '').strip()
+YANDEX_SMTP_APP_PASSWORD = os.getenv('YANDEX_SMTP_APP_PASSWORD', '')
+FOODSTASH_SITE_URL = os.getenv('FOODSTASH_SITE_URL', '').strip().rstrip('/')
+
+if YANDEX_SMTP_USER and YANDEX_SMTP_APP_PASSWORD:
+    DEFAULT_FROM_EMAIL = f'FoodStash <{YANDEX_SMTP_USER}>'
+    MAILERS['registration'] = {
+        'BACKEND': 'django.core.mail.backends.smtp.EmailBackend',
+        'OPTIONS': {
+            'host': 'smtp.yandex.ru',
+            'port': 465,
+            'use_ssl': True,
+            'username': YANDEX_SMTP_USER,
+            'password': YANDEX_SMTP_APP_PASSWORD,
+            'timeout': 10,
+        },
+    }
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+PASSWORD_RESET_TIMEOUT = 60 * 60
 
 AUTH_USER_MODEL = 'recipes.User'

@@ -1,17 +1,7 @@
-/* ===== ТЕГИ И ПОДСКАЗКИ ===== */
-.hero__tags,
-.search-tags {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-}
-
 .tag-label {
-    color: var(--text-light);
+    color: var(--text-muted);
     margin-right: 4px;
+    font-size: 13px;
 }
 
 .tag {
@@ -27,6 +17,6 @@
 
 .tag:hover {
     border-color: var(--primary);
-    color: var(--primary);
+    color: var(--accent-text);
     background: var(--primary-soft);
 }

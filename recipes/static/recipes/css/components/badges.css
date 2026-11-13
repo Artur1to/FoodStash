@@ -10,12 +10,12 @@
 
 .badge--category {
     background: var(--primary-soft);
-    color: var(--primary);
+    color: var(--accent-text);
 }
 
 .badge--difficulty {
-    background: #e8f5e9;
-    color: #2e7d32;
+    background: var(--positive-soft);
+    color: var(--positive);
 }
 
 /* Бейджи совпадения (в результатах поиска) */
@@ -27,20 +27,22 @@
     border-radius: 100px;
     font-size: 14px;
     font-weight: 700;
-    color: #fff;
-    backdrop-filter: blur(8px);
+    color: var(--text);
+    border: 1px solid var(--border);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1;
 }
 
 .match-badge--high {
-    background: rgba(76, 175, 80, 0.95);
+    background: var(--positive-soft);
+    color: var(--positive);
 }
 
 .match-badge--medium {
-    background: rgba(255, 152, 0, 0.95);
+    background: var(--primary-soft);
+    color: var(--accent-text);
 }
 
 .match-badge--low {
-    background: rgba(158, 158, 158, 0.95);
+    background: var(--bg-card);
 }

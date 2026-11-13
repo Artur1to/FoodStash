@@ -7,6 +7,7 @@ from django.templatetags.static import static
 
 
 class User(AbstractUser):
+    email_confirmation_requested_at = models.DateTimeField(null=True, blank=True, editable=False)
     avatar = models.ImageField(upload_to=latin_filename, blank=True, null=True)
     bio = models.TextField(blank=True, max_length=500)
     banner = models.ImageField(upload_to=latin_filename, blank=True, null=True)
@@ -204,6 +205,7 @@ class UserAchievement(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='achievements')
     achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
     unlocked_at = models.DateTimeField(auto_now_add=True)
+    notified_at = models.DateTimeField(null=True, blank=True, editable=False)
 
     class Meta:
         unique_together = ('user', 'achievement')

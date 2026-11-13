@@ -1,22 +1,18 @@
 {% extends 'recipes/base.html' %}
 {% block title %}Регистрация — FoodStash{% endblock %}
+{% block header_search %}{% endblock %}
 
 {% block content %}
 <div class="auth-page">
     <div class="auth-card">
         <h1 class="auth-title">Регистрация</h1>
-        <p class="auth-subtitle">Присоединяйся к FoodStash</p>
+        <p class="auth-description">После регистрации на почту придёт ссылка для подтверждения аккаунта.</p>
 
         <form method="post" class="auth-form">
             {% csrf_token %}
+            {{ form.non_field_errors }}
             {% for field in form %}
-                <div class="form-group">
-                    <label class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}
-                        <div class="form-error">{{ field.errors.0 }}</div>
-                    {% endif %}
-                </div>
+                {% include 'recipes/includes/form_field.html' with field=field only %}
             {% endfor %}
             <button type="submit" class="btn btn--primary btn--full">Зарегистрироваться</button>
         </form>

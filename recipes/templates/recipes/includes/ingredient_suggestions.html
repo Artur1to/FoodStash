@@ -1,0 +1,12 @@
+{% if suggestions %}
+    <div class="search-suggestions">
+        <span class="tag-label">Из каталога</span>
+        {% for ingredient in suggestions %}
+            {% if catalog %}
+                <a href="{% querystring q=ingredient.name page=None sort=None %}" class="tag" data-ajax-link>{{ ingredient.name }}</a>
+            {% else %}
+                <a href="{% url 'search_recipes' %}?q={{ ingredient.name|urlencode }}" class="tag">{{ ingredient.name }}</a>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}

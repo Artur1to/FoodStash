@@ -1,0 +1,13 @@
+<div class="recipe-ingredient" data-ingredient-index="{{ index }}">
+    {% for field in row.hidden_fields %}{{ field }}{% endfor %}
+    {% include 'recipes/includes/form_field.html' with field=row.ingredient only %}
+    {% include 'recipes/includes/form_field.html' with field=row.quantity only %}
+    <label class="checkbox-label recipe-ingredient__delete">
+        {{ row.DELETE }} Удалить ингредиент
+    </label>
+    <button type="button" class="btn btn--outline recipe-ingredient__remove" aria-label="Удалить ингредиент"
+            title="Удалить ингредиент" data-remove-ingredient>
+        <span aria-hidden="true">×</span>
+    </button>
+    {{ row.non_field_errors }}
+</div>

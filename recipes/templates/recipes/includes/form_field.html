@@ -1,0 +1,11 @@
+<div class="form-group">
+    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.help_text %}
+        <div class="form-page__hint" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</div>
+    {% endif %}
+    {{ field.errors }}
+    {% if reselect and not field.errors %}
+        <p class="form-page__hint" data-file-reselect>Выбери файл заново перед сохранением.</p>
+    {% endif %}
+</div>

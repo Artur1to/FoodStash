@@ -1,0 +1,41 @@
+<a href="{% url 'recipe_detail' recipe.slug %}" class="recipe-card{% if catalog %} recipe-card--search{% endif %}">
+    <div class="recipe-card__image">
+        {% if recipe.image %}
+            <img src="{{ recipe.image.url }}" alt="" loading="lazy" decoding="async">
+        {% else %}
+            <span class="recipe-card__placeholder" aria-hidden="true">🍲</span>
+        {% endif %}
+        {% if catalog and recipe.total_count %}
+            <span class="match-badge {% if recipe.match_percent >= 80 %}match-badge--high{% elif recipe.match_percent >= 50 %}match-badge--medium{% else %}match-badge--low{% endif %}">
+                {{ recipe.match_percent }}%
+            </span>
+        {% endif %}
+    </div>
+    <div class="recipe-card__body">
+        <h3 class="recipe-card__title">{{ recipe.title }}</h3>
+        {% if recipe.description %}
+            <p class="recipe-card__desc">{{ recipe.description|truncatewords:16 }}</p>
+        {% endif %}
+        {% if catalog and recipe.total_count %}
+            <div class="recipe-match">
+                <div class="recipe-match__bar" aria-hidden="true">
+                    <div class="recipe-match__fill" style="width: {{ recipe.match_percent }}%;"></div>
+                </div>
+                <p class="recipe-match__text">{{ recipe.matched_count }} из {{ recipe.total_count }} ингредиентов</p>
+            </div>
+            {% if recipe.missing %}
+                <p class="recipe-missing"><strong>Не хватает</strong> {{ recipe.missing|join:", " }}</p>
+            {% endif %}
+        {% endif %}
+        <div class="recipe-card__meta">
+            <span><span aria-hidden="true">⏱</span> {{ recipe.cooking_time }} мин</span>
+            {% if rating %}
+                <span class="recipe-card__rating">★ {{ rating|floatformat:1 }}</span>
+            {% endif %}
+            <span>♥ {{ likes }}</span>
+            {% if show_author %}
+                <span class="recipe-card__author nick-{{ recipe.author.nickname_style }}">{{ recipe.author.username }}</span>
+            {% endif %}
+        </div>
+    </div>
+</a>

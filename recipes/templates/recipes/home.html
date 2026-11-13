@@ -1,31 +1,31 @@
 {% extends 'recipes/base.html' %}
+{% load recipe_categories %}
 
 {% block content %}
 
-<!-- HERO -->
-<section class="hero">
+<section class="container home-hero" aria-labelledby="home-title">
+    <div class="home-hero__panel">
+        <div>
+            <h1 id="home-title" class="home-hero__title">Рецепты из того, что есть дома</h1>
+            <p class="home-hero__description">Введи продукты в поиске, чтобы узнать, что можно приготовить.</p>
+        </div>
+        <a href="{% url 'search_recipes' %}" class="btn btn--primary">Открыть каталог <span aria-hidden="true">→</span></a>
+    </div>
+</section>
+
+<!-- ПОСЛЕДНИЕ РЕЦЕПТЫ -->
+<section class="section">
     <div class="container">
-        <h1 class="hero__title">Что приготовить из того, что есть?</h1>
-        <p class="hero__subtitle">Введи продукты — мы найдём рецепты, которые можно приготовить прямо сейчас</p>
-
-        <form action="{% url 'search_recipes' %}" method="get" class="hero-search">
-            <input type="text" name="q" placeholder="Например: курица, картошка, лук" class="hero-search__input">
-            <button type="submit" class="btn btn--primary">Найти рецепты</button>
-        </form>
-
-        <div class="hero__tags">
-            <span class="tag-label">Популярные:</span>
-            <a href="{% url 'search_recipes' %}?q=курица" class="tag">курица</a>
-            <a href="{% url 'search_recipes' %}?q=картошка" class="tag">картошка</a>
-            <a href="{% url 'search_recipes' %}?q=яйца" class="tag">яйца</a>
-            <a href="{% url 'search_recipes' %}?q=сыр" class="tag">сыр</a>
-            <a href="{% url 'search_recipes' %}?q=макароны" class="tag">макароны</a>
+        <div class="section__head">
+            <h2 class="section__title">Свежие рецепты</h2>
         </div>
 
-        <div style="margin-top: 20px;">
-            <a href="{% url 'random_recipe' %}" class="btn btn--outline" style="background:#fff;border-radius:100px;padding:10px 22px;">
-                🎲 Что приготовить? (Случайный рецепт)
-            </a>
+        <div class="recipes-grid">
+            {% for recipe in recipes %}
+                {% include 'recipes/includes/recipe_card.html' with recipe=recipe rating=recipe.average_rating likes=recipe.likes.count show_author=True only %}
+            {% empty %}
+                <p class="empty-text">Рецептов пока нет.</p>
+            {% endfor %}
         </div>
     </div>
 </section>
@@ -35,68 +35,19 @@
     <div class="container">
         <div class="section__head">
             <h2 class="section__title">Категории</h2>
-            <a href="{% url 'category_list' %}" class="section__link">Все →</a>
+            <a href="{% url 'category_list' %}" class="section__link">Все категории <span aria-hidden="true">→</span></a>
         </div>
 
         <div class="categories">
             {% for category in categories %}
                 <a href="{% url 'category_detail' category.slug %}" class="category-card">
-                    <div class="category-card__icon">{{ category.icon|default:"🍽️" }}</div>
+                    <span class="category-card__icon" aria-hidden="true">{{ category|category_icon }}</span>
                     <div class="category-card__name">{{ category.name }}</div>
                 </a>
             {% empty %}
-                <p class="empty-text">Категорий пока нет. Добавь их в админке.</p>
+                <p class="empty-text">Категорий пока нет.</p>
             {% endfor %}
         </div>
-    </div>
-</section>
-
-<!-- ПОСЛЕДНИЕ РЕЦЕПТЫ -->
-<section class="section">
-    <div class="container">
-        <div class="section__head">
-            <h2 class="section__title">Свежие рецепты</h2>
-            <a href="{% url 'search_recipes' %}" class="section__link">Все рецепты →</a>
-        </div>
-
-        <div class="recipes-grid">
-            {% for recipe in recipes %}
-                <a href="/recipe/{{ recipe.slug }}/" class="recipe-card">
-                    <div class="recipe-card__image">
-                        {% if recipe.image %}
-                            <img src="{{ recipe.image_url }}" alt="{{ recipe.title }}">
-                        {% else %}
-                            <div class="recipe-card__placeholder">🍲</div>
-                        {% endif %}
-                    </div>
-                    <div class="recipe-card__body">
-                        <h3 class="recipe-card__title">{{ recipe.title }}</h3>
-                        <p class="recipe-card__desc">{{ recipe.description|truncatewords:12 }}</p>
-                        <div class="recipe-card__meta">
-                            <span>⏱ {{ recipe.cooking_time }} мин</span>
-                            {% if recipe.average_rating %}
-                                <span style="color:#f59e0b;font-weight:600;">★ {{ recipe.average_rating }}</span>
-                            {% endif %}
-                            <span>❤️ {{ recipe.likes.count }}</span>
-                            <span>👤 <span class="nick-{{ recipe.author.nickname_style }}">{{ recipe.author.username }}</span></span>
-                        </div>
-                    </div>
-                </a>
-            {% empty %}
-                <p class="empty-text">Рецептов пока нет. Добавь первые в админке.</p>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-<!-- CTA -->
-<section class="cta">
-    <div class="container cta__inner">
-        <div class="cta__text">
-            <h2 class="cta__title">Поделись своим рецептом</h2>
-            <p class="cta__subtitle">Тысячи людей ищут, что приготовить. Возможно, твой рецепт — то, что им нужно.</p>
-        </div>
-        <a href="{% url 'recipe_add' %}" class="btn btn--primary btn--lg">Добавить рецепт</a>
     </div>
 </section>
 

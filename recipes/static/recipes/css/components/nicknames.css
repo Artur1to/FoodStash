@@ -8,7 +8,7 @@
 
 /* Золотой градиент */
 .nick-gold {
-    background: linear-gradient(135deg, #ffd700 0%, #ffb800 50%, #ff8c00 100%);
+    background: var(--nick-gold, linear-gradient(135deg, #805409, #9d5b0e));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -17,7 +17,7 @@
 
 /* Огненный */
 .nick-fire {
-    background: linear-gradient(135deg, #ff0000 0%, #ff4500 40%, #ff8c00 80%, #ffd700 100%);
+    background: var(--nick-fire, linear-gradient(135deg, #a42e27, #a64a1c));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -26,7 +26,7 @@
 
 /* Ледяной */
 .nick-ice {
-    background: linear-gradient(135deg, #00bfff 0%, #87ceeb 50%, #e0f7ff 100%);
+    background: var(--nick-ice, linear-gradient(135deg, #215d7a, #336e93));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -35,7 +35,7 @@
 
 /* Кровавый */
 .nick-blood {
-    background: linear-gradient(135deg, #8b0000 0%, #dc143c 50%, #ff0000 100%);
+    background: var(--nick-blood, linear-gradient(135deg, #831529, #a82a42));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -44,7 +44,7 @@
 
 /* Изумрудный */
 .nick-emerald {
-    background: linear-gradient(135deg, #00ff7f 0%, #00c853 50%, #004d40 100%);
+    background: var(--nick-emerald, linear-gradient(135deg, #236542, #376b4a));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -53,7 +53,7 @@
 
 /* Королевский */
 .nick-royal {
-    background: linear-gradient(135deg, #9c27b0 0%, #673ab7 50%, #3f51b5 100%);
+    background: var(--nick-royal, linear-gradient(135deg, #732d87, #4d418c));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -62,7 +62,7 @@
 
 /* Космический */
 .nick-cosmic {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f3460 60%, #533483 100%);
+    background: var(--nick-cosmic, linear-gradient(135deg, #1a1a2e, #533483));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -71,44 +71,31 @@
 
 /* Неон розовый */
 .nick-neon-pink {
-    color: #ff10f0;
-    text-shadow:
-        0 0 5px #ff10f0,
-        0 0 10px #ff10f0,
-        0 0 20px #ff10f0,
-        0 0 40px #ff10f0;
+    color: var(--nick-pink, #9c286c);
+    text-shadow: 0 0 8px color-mix(in srgb, currentColor 35%, transparent);
     font-weight: 700;
 }
 
 /* Неон голубой */
 .nick-neon-blue {
-    color: #00f0ff;
-    text-shadow:
-        0 0 5px #00f0ff,
-        0 0 10px #00f0ff,
-        0 0 20px #00f0ff,
-        0 0 40px #00f0ff;
+    color: var(--nick-blue, #186385);
+    text-shadow: 0 0 8px color-mix(in srgb, currentColor 35%, transparent);
     font-weight: 700;
 }
 
 /* Неон зелёный */
 .nick-neon-green {
-    color: #39ff14;
-    text-shadow:
-        0 0 5px #39ff14,
-        0 0 10px #39ff14,
-        0 0 20px #39ff14,
-        0 0 40px #39ff14;
+    color: var(--nick-green, #3d6722);
+    text-shadow: 0 0 8px color-mix(in srgb, currentColor 35%, transparent);
     font-weight: 700;
 }
 
 /* Радужный анимированный */
 .nick-rainbow {
-    background: linear-gradient(
+    background: var(--nick-rainbow, linear-gradient(
         90deg,
-        #ff0000, #ff7700, #ffff00, #00ff00,
-        #00ffff, #0000ff, #8b00ff, #ff0000
-    );
+        #a42e27, #805409, #236542, #215d7a, #732d87, #a42e27
+    ));
     background-size: 200% auto;
     -webkit-background-clip: text;
     background-clip: text;
@@ -122,10 +109,22 @@
     100% { background-position: 200% center; }
 }
 
-/* Тёмная тема — для ников, где нужен светлый фон */
-body.dark .nick-cosmic {
-    background: linear-gradient(135deg, #e0e0f0 0%, #a0a0d0 50%, #7070b0 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+.dark {
+    --nick-gold: linear-gradient(135deg, #ffe095, #ffc070);
+    --nick-fire: linear-gradient(135deg, #ff9280, #ffd199);
+    --nick-ice: linear-gradient(135deg, #91ddf6, #d5eefb);
+    --nick-blood: linear-gradient(135deg, #ff9a9f, #ec7c8e);
+    --nick-emerald: linear-gradient(135deg, #9de0b2, #75c9a6);
+    --nick-royal: linear-gradient(135deg, #ddaaf4, #c7b7f6);
+    --nick-cosmic: linear-gradient(135deg, #e0e0f0, #aeb5ee);
+    --nick-pink: #ff9ad6;
+    --nick-blue: #94dcff;
+    --nick-green: #b4df86;
+    --nick-rainbow: linear-gradient(90deg, #ff9a9f, #ffd199, #9de0b2, #91ddf6, #ddaaf4, #ff9a9f);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nick-rainbow {
+        animation: none;
+    }
 }

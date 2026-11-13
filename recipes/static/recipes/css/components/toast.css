@@ -1,52 +1,76 @@
-/* ===== ТОСТ УВЕДОМЛЕНИЙ (АЧИВКИ) ===== */
 .achievement-toast {
     position: fixed;
-    top: 80px;
-    right: 24px;
-    max-width: 360px;
-    padding: 20px 24px;
-    background: var(--bg-card);
-    color: var(--text);
-    border: 2px solid var(--primary);
+    inset: 80px 20px auto auto;
+    z-index: 108;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 6px 12px;
+    width: min(340px, calc(100% - 32px));
+    max-height: min(60vh, 360px);
+    overflow: auto;
+    padding: 13px 14px 13px 16px;
+    border: 1px solid var(--highlight-border);
+    border-inline-start: 4px solid var(--primary);
     border-radius: var(--radius);
-    box-shadow: 0 12px 32px rgba(255, 122, 61, 0.2);
-    z-index: 9999;
-    opacity: 0;
-    transform: translateX(400px);
-    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-lg);
+    font-size: .88rem;
 }
 
-.achievement-toast.show {
-    opacity: 1;
-    transform: translateX(0);
+.achievement-toast[hidden] {
+    display: none;
 }
 
 .achievement-toast__title {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--primary);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+    color: var(--accent-text);
+    font-weight: 750;
 }
 
-.achievement-toast__item {
-    font-size: 14px;
+.achievement-toast ul {
+    display: grid;
+    gap: 2px;
+    list-style: none;
+}
+
+.achievement-toast a {
+    grid-column: 1 / -1;
+    justify-self: start;
+    color: var(--accent-text);
+    font-weight: 650;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.achievement-toast__close {
+    display: grid;
+    place-items: center;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
     color: var(--text);
-    padding: 6px 0;
-    border-top: 1px solid var(--border);
-    line-height: 1.4;
+    font-size: 1.3rem;
+    cursor: pointer;
 }
 
-.achievement-toast__item:first-of-type {
-    border-top: none;
+.achievement-toast__close:hover {
+    background: var(--primary-soft);
 }
 
-@media (max-width: 500px) {
+.achievement-announcement {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+}
+
+@media (max-width: 620px) {
     .achievement-toast {
-        top: 16px;
-        right: 16px;
-        left: 16px;
-        max-width: none;
+        inset: 16px 16px auto auto;
     }
 }

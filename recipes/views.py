@@ -1,27 +1,51 @@
+from contextlib import nullcontext
+
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
+from django.utils.cache import add_never_cache_headers, patch_vary_headers
+from django.utils import timezone
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_http_methods, require_POST
 from django.contrib.auth.decorators import login_required
-from django.forms import inlineformset_factory
-from django.db.models import Count, Q, Sum
-from .forms import RegisterForm, UserForm, RecipeForm, RecipeIngredientForm
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import Avg, Count, Q, Sum
+from .email_confirmation import RESEND_DELAY, confirmation_matches, send_confirmation
+from .forms import RegisterForm, ResendConfirmationForm, UserForm, RecipeForm, RecipeIngredientFormSet
 from . import achievements
+from .search import ingredient_suggestions, match_ingredients, normalize
 from .models import (
-    User, Category, Ingredient, Recipe,
+    User, Category, Recipe,
     RecipeIngredient, Favorite, Rating, Comment, Like, CommentVote,
-    Achievement, UserAchievement, Subscription
+    Subscription
 )
+
+
+def _wants_fragment(request):
+    return request.headers.get('X-FoodStash-Fragment') == '1'
+
+
+def _render_section(request, template_name, partial, context):
+    is_fragment = _wants_fragment(request)
+    template = f'{template_name}#{partial}' if is_fragment else template_name
+    response = render(request, template, context)
+    patch_vary_headers(response, ('X-FoodStash-Fragment',))
+    if is_fragment:
+        add_never_cache_headers(response)
+    return response
+
 
 def home(request):
     recipes = Recipe.objects.order_by('-created_at')[:8]
-    categories = Category.objects.all()[:8]
+    categories = Category.objects.all()
     return render(request, 'recipes/home.html', {
         'recipes': recipes,
         'categories': categories,
     })
 
 
+@require_http_methods(['GET', 'POST'])
 def register_view(request):
     if request.user.is_authenticated:
         return redirect('home')
@@ -29,26 +53,86 @@ def register_view(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('home')
+            if 'registration' not in settings.MAILERS:
+                form.add_error(None, 'Отправка писем пока недоступна. Попробуй позже.')
+            else:
+                user = form.save(commit=False)
+                user.is_active = False
+                user.email_confirmation_requested_at = timezone.now()
+                user.save()
+                request.session['pending_registration_id'] = user.pk
+                request.session['registration_mail_state'] = 'sent' if send_confirmation(request, user) else 'failed'
+                return redirect('registration_pending')
     else:
         form = RegisterForm()
 
     return render(request, 'recipes/register.html', {'form': form})
 
 
-def profile_view(request, username):
-    user_obj = get_object_or_404(User, username=username)
-    is_own = request.user == user_obj
+@never_cache
+def registration_pending(request):
+    return render(request, 'recipes/registration_pending.html', {
+        'mail_state': request.session.get('registration_mail_state', 'sent'),
+    })
 
-    is_subscribed = False
-    subscribers_count = user_obj.subscribers.count()
-    if request.user.is_authenticated and request.user != user_obj:
-        is_subscribed = Subscription.objects.filter(
-            subscriber=request.user,
-            author=user_obj
-        ).exists()
+
+@never_cache
+@require_http_methods(['GET', 'POST'])
+def confirm_email(request, user_id, token):
+    candidates = User.objects.filter(
+        pk=user_id,
+        is_active=False,
+        email_confirmation_requested_at__isnull=False,
+    )
+    user = candidates.first()
+    valid = user is not None and confirmation_matches(user, token)
+    confirmed = False
+    if valid and request.method == 'POST':
+        confirmed = bool(candidates.filter(email=user.email, date_joined=user.date_joined).update(
+            is_active=True,
+            email_confirmation_requested_at=None,
+        ))
+        valid = False
+
+    response = render(request, 'recipes/confirm_email.html', {
+        'valid': valid,
+        'confirmed': confirmed,
+    })
+    response['Referrer-Policy'] = 'no-referrer'
+    return response
+
+
+@never_cache
+@require_http_methods(['GET', 'POST'])
+def resend_confirmation(request):
+    form = ResendConfirmationForm(request.POST if request.method == 'POST' else None)
+    if request.method == 'POST' and form.is_valid():
+        if 'registration' not in settings.MAILERS:
+            form.add_error(None, 'Отправка писем пока недоступна. Попробуй позже.')
+        else:
+            now = timezone.now()
+            candidates = User.objects.filter(
+                username=form.cleaned_data['username'],
+                email__iexact=form.cleaned_data['email'],
+                is_active=False,
+                email_confirmation_requested_at__lt=now - RESEND_DELAY,
+            )
+            user = candidates.first()
+            mail_state = 'resent'
+            if user and candidates.filter(pk=user.pk).update(email_confirmation_requested_at=now):
+                sent = send_confirmation(request, user)
+                if user.pk == request.session.get('pending_registration_id'):
+                    mail_state = 'sent' if sent else 'failed'
+
+            request.session['registration_mail_state'] = mail_state
+            return redirect('registration_pending')
+
+    return render(request, 'recipes/resend_confirmation.html', {'form': form})
+
+
+def profile_view(request, username):
+    user_obj = get_object_or_404(User, username=username, email_confirmation_requested_at__isnull=True)
+    is_own = request.user == user_obj
 
     # Определяем активную вкладку
     tab = request.GET.get('tab', 'recipes')
@@ -69,24 +153,37 @@ def profile_view(request, username):
     else:
         items = Recipe.objects.filter(author=user_obj).order_by('-created_at')
 
-    # Счётчики для вкладок
     counts = {
-        'recipes': Recipe.objects.filter(author=user_obj).count(),
+        'recipes': user_obj.recipes.count(),
         'likes': Like.objects.filter(user=user_obj).count(),
-        'favorites': Favorite.objects.filter(user=user_obj).count(),
     }
+    if is_own:
+        counts['favorites'] = Favorite.objects.filter(user=user_obj).count()
 
-    user_achievements = UserAchievement.objects.filter(user=user_obj).select_related('achievement')
-
-    return render(request, 'recipes/profile.html', {
+    context = {
         'profile_user': user_obj,
         'items': items,
         'tab': tab,
         'is_own': is_own,
         'counts': counts,
-        'user_achievements': user_achievements,
-        'is_subscribed': is_subscribed,
-        'subscribers_count': subscribers_count,
+    }
+    if not _wants_fragment(request):
+        context.update(
+            achievement_preview=achievements.preview(user_obj),
+            is_subscribed=request.user.is_authenticated and not is_own
+            and user_obj.subscribers.filter(subscriber=request.user).exists(),
+            subscribers_count=user_obj.subscribers.count(),
+        )
+    return _render_section(request, 'recipes/profile.html', 'profile_tabs', context)
+
+
+def profile_achievements(request, username):
+    profile_user = get_object_or_404(User, username=username, email_confirmation_requested_at__isnull=True)
+    is_own = request.user == profile_user
+    return render(request, 'recipes/achievements.html', {
+        'profile_user': profile_user,
+        'is_own': is_own,
+        'collection': achievements.collection(profile_user, is_own),
     })
 
 
@@ -105,6 +202,9 @@ def profile_edit(request):
 
 def recipe_detail(request, slug):
     recipe = get_object_or_404(Recipe, slug=slug)
+    comments_context = _recipe_comments(request, recipe)
+    if _wants_fragment(request):
+        return _render_section(request, 'recipes/recipe_detail.html', 'comments', comments_context)
 
     # Уникальный просмотр
     viewed = request.session.get('viewed_recipes', [])
@@ -116,65 +216,61 @@ def recipe_detail(request, slug):
 
     ingredients = recipe.ingredients.select_related('ingredient').all()
 
-    # === СОРТИРОВКА КОММЕНТАРИЕВ ===
-    sort = request.GET.get('sort', 'date')
-    if sort == 'likes':
-        comments = recipe.comments.select_related('user').annotate(
-            likes_count=Count('votes', filter=Q(votes__vote_type='like'))
-        ).order_by('-likes_count', '-created_at')
-    else:
-        comments = recipe.comments.select_related('user').order_by('-created_at')
-
-    # Прокачиваем каждый комментарий данными о лайках/дизлайках
-    user_votes = {}
-    if request.user.is_authenticated:
-        votes = CommentVote.objects.filter(
-            user=request.user,
-            comment__recipe=recipe
-        ).values_list('comment_id', 'vote_type')
-        user_votes = dict(votes)
-
-    comments_data = []
-    for comment in comments:
-        likes = comment.votes.filter(vote_type='like').count()
-        dislikes = comment.votes.filter(vote_type='dislike').count()
-        comments_data.append({
-            'comment': comment,
-            'obj': comment,
-            'likes': likes,
-            'dislikes': dislikes,
-            'user_vote': user_votes.get(comment.id),
-        })
-
     is_favorite = False
     is_liked = False
     if request.user.is_authenticated:
         is_favorite = Favorite.objects.filter(user=request.user, recipe=recipe).exists()
         is_liked = Like.objects.filter(user=request.user, recipe=recipe).exists()
 
-    # === АЧИВКИ: ЗАБИРАЕМ ИЗ СЕССИИ, ЧТОБЫ ПОКАЗАТЬ ТОСТ ===
-    new_achievements_toast = Achievement.objects.filter(
-        code__in=request.session.pop('unlocked_achievements', [])
-    )
-
     user_rating = recipe.user_rating(request.user) if request.user.is_authenticated else 0
     avg_rating = recipe.average_rating()
     ratings_count = recipe.ratings_count()
+    servings = recipe.servings or 1
+    nutrition = [
+        (label, value, value * servings if value is not None else None)
+        for label, value in (
+            ('ккал', recipe.calories),
+            ('белки (г)', recipe.proteins),
+            ('жиры (г)', recipe.fats),
+            ('углеводы (г)', recipe.carbs),
+        )
+    ]
 
-    return render(request, 'recipes/recipe_detail.html', {
+    return _render_section(request, 'recipes/recipe_detail.html', 'comments', {
+        **comments_context,
+        'show_comment_form': True,
         'recipe': recipe,
         'ingredients': ingredients,
-        'comments_data': comments_data,
-        'comments_count': len(comments_data),
         'is_favorite': is_favorite,
         'is_liked': is_liked,
         'likes_count': recipe.likes.count(),
         'user_rating': user_rating,
         'avg_rating': avg_rating,
         'ratings_count': ratings_count,
-        'sort': sort,
-        'new_achievements_toast': new_achievements_toast,
+        'servings': servings,
+        'nutrition': nutrition if any(value is not None for _, value, _ in nutrition) else [],
     })
+
+
+def _recipe_comments(request, recipe):
+    sort = 'likes' if request.GET.get('sort') == 'likes' else 'date'
+    ordering = ('-likes_count', '-created_at', '-pk') if sort == 'likes' else ('-created_at', '-pk')
+    comments = recipe.comments.select_related('user').annotate(
+        likes_count=Count('votes', filter=Q(votes__vote_type='like')),
+        dislikes_count=Count('votes', filter=Q(votes__vote_type='dislike')),
+    ).order_by(*ordering)
+    user_votes = {}
+    if request.user.is_authenticated:
+        user_votes = dict(CommentVote.objects.filter(
+            user=request.user, comment__recipe=recipe,
+        ).values_list('comment_id', 'vote_type'))
+
+    comments_data = [
+        {'comment': comment, 'likes': comment.likes_count, 'dislikes': comment.dislikes_count,
+         'user_vote': user_votes.get(comment.pk)}
+        for comment in comments
+    ]
+    return {'comments_data': comments_data, 'comments_count': len(comments_data), 'sort': sort}
 
 
 @require_POST
@@ -205,7 +301,7 @@ def toggle_like(request, recipe_id):
         return JsonResponse({'status': 'removed', 'count': recipe.likes.count()})
 
     if recipe.author != request.user:
-        achievements.check_like_received(recipe.author)
+        achievements.grant(recipe.author, 'likes_total', 'likes_best')
 
     return JsonResponse({'status': 'added', 'count': recipe.likes.count()})
 
@@ -220,9 +316,7 @@ def add_comment(request, recipe_id):
 
     if content:
         Comment.objects.create(user=request.user, recipe=recipe, content=content)
-        unlocked = achievements.check_comment_achievements(request.user)
-        if unlocked:
-            request.session['unlocked_achievements'] = unlocked
+        achievements.grant(request.user, 'comments')
 
     return redirect('recipe_detail', slug=recipe.slug)
 
@@ -244,16 +338,18 @@ def rate_recipe(request, recipe_id):
     if not (1 <= value <= 5):
         return JsonResponse({'error': 'out_of_range'}, status=400)
     recipe = get_object_or_404(Recipe, id=recipe_id)
-    Rating.objects.update_or_create(
+    _, created = Rating.objects.update_or_create(
         user=request.user,
         recipe=recipe,
         defaults={'value': value}
     )
+    unlocked = created and request.user != recipe.author and achievements.grant(request.user, 'ratings')
     return JsonResponse({
         'status': 'ok',
         'user_rating': value,
         'avg_rating': recipe.average_rating(),
         'ratings_count': recipe.ratings_count(),
+        'awards': achievements.notification_data(request.user) if unlocked else [],
     })
 
 
@@ -289,7 +385,7 @@ def category_detail(request, slug):
     else:
         recipes = sorted(recipes, key=lambda r: r.created_at, reverse=True)
 
-    return render(request, 'recipes/category_detail.html', {
+    return _render_section(request, 'recipes/category_detail.html', 'category_results', {
         'category': category,
         'recipes': recipes,
         'selected_difficulty': difficulty,
@@ -298,41 +394,65 @@ def category_detail(request, slug):
         'has_filters': any([difficulty, time_max, sort != 'new']),
     })
 
+@login_required
 def recipe_add(request):
-    if not request.user.is_authenticated:
-        return redirect(f'/login/?next=/recipe/add/')
+    return _recipe_form(request)
 
-    RecipeIngredientFormSet = inlineformset_factory(
-        Recipe,
-        RecipeIngredient,
-        form=RecipeIngredientForm,
-        extra=3,
-        can_delete=True,
-        min_num=1,
-        validate_min=True,
-    )
 
-    if request.method == 'POST':
-        form = RecipeForm(request.POST, request.FILES)
-        formset = RecipeIngredientFormSet(request.POST)
+@login_required
+def recipe_edit(request, slug):
+    return _recipe_form(request, slug)
 
-        if form.is_valid() and formset.is_valid():
-            recipe = form.save(commit=False)
-            recipe.author = request.user
-            recipe.save()
-            formset.instance = recipe
-            formset.save()
-            unlocked = achievements.check_recipe_achievements(request.user)
-            if unlocked:
-                request.session['unlocked_achievements'] = unlocked
-            return redirect('recipe_detail', slug=recipe.slug)
-    else:
-        form = RecipeForm()
-        formset = RecipeIngredientFormSet()
+
+def _recipe_form(request, slug=None):
+    editing = slug is not None
+    submitting = request.method == 'POST'
+    data = request.POST if submitting else None
+    files = request.FILES if submitting else None
+    uploaded_photo = None
+
+    try:
+        with transaction.atomic() if submitting else nullcontext():
+            if editing:
+                recipes = Recipe.objects.select_for_update() if submitting else Recipe.objects.all()
+                recipe = get_object_or_404(recipes, slug=slug, author=request.user)
+            else:
+                recipe = Recipe(author=request.user)
+
+            photo_url = recipe.image.url if recipe.image else ''
+            form = RecipeForm(data, files, instance=recipe)
+            formset = RecipeIngredientFormSet(
+                data,
+                instance=recipe,
+                error_messages={'too_few_forms': 'Добавь хотя бы один ингредиент.'},
+            )
+            saved = submitting and form.is_valid() and formset.is_valid()
+            if saved:
+                recipe = form.save(commit=False)
+                if 'image' in form.changed_data:
+                    photo = form.cleaned_data['image']
+                    recipe.image.save(photo.name, photo, save=False)
+                    uploaded_photo = recipe.image
+
+                recipe.save(update_fields=form.changed_data if editing else None)
+                formset.save()
+                if not editing or {'category', 'image'}.intersection(form.changed_data):
+                    achievements.grant(request.user, 'recipes', 'photos', 'categories')
+    except Exception:
+        # File storage does not roll back with the database transaction.
+        if uploaded_photo:
+            uploaded_photo.storage.delete(uploaded_photo.name)
+        raise
+
+    if saved:
+        return redirect('recipe_detail', slug=recipe.slug)
 
     return render(request, 'recipes/recipe_add.html', {
         'form': form,
         'formset': formset,
+        'editing': editing,
+        'recipe': recipe,
+        'photo_url': photo_url,
     })
 
 @require_POST
@@ -365,12 +485,13 @@ def vote_comment(request, comment_id):
     likes = comment.votes.filter(vote_type='like').count()
     dislikes = comment.votes.filter(vote_type='dislike').count()
 
-    achievements.check_vote_achievements(request.user)
+    unlocked = existing is None and achievements.grant(request.user, 'votes')
 
     return JsonResponse({
         'likes': likes,
         'dislikes': dislikes,
         'user_vote': user_vote,
+        'awards': achievements.notification_data(request.user) if unlocked else [],
     })
 
 @require_POST
@@ -378,7 +499,7 @@ def toggle_subscription(request, username):
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'auth_required'}, status=401)
 
-    author = get_object_or_404(User, username=username)
+    author = get_object_or_404(User, username=username, email_confirmation_requested_at__isnull=True)
 
     if author == request.user:
         return JsonResponse({'error': 'cant_subscribe_self'}, status=400)
@@ -388,19 +509,19 @@ def toggle_subscription(request, username):
         author=author
     )
 
+    unlocked = 0
     if not created:
         sub.delete()
         status = 'removed'
     else:
         status = 'added'
-        # Проверка ачивки у автора
-        unlocked = achievements.check_subscriber_achievements(author)
-        if unlocked:
-            pass  # ачивка выдастся, уведомление покажем при следующем заходе автора
+        achievements.grant(author, 'followers')
+        unlocked = achievements.grant(request.user, 'following')
 
     return JsonResponse({
         'status': status,
         'count': author.subscribers.count(),
+        'awards': achievements.notification_data(request.user) if unlocked else [],
     })
 
 def feed(request):
@@ -450,121 +571,94 @@ def leaderboard(request):
             'score': u.score,
         })
 
-    return render(request, 'recipes/leaderboard.html', {
+    return _render_section(request, 'recipes/leaderboard.html', 'leaderboard_tabs', {
         'leaders': leaders,
         'tab': tab,
     })
 
 
-from django.core.paginator import Paginator
-
-
 def search_recipes(request):
-    # === ПАРАМЕТРЫ ===
-    query = request.GET.get('q', '').strip()           # ингредиенты
-    name = request.GET.get('name', '').strip()         # поиск по названию/описанию
-    category_id = request.GET.get('category', '')      # фильтр по категории
-    difficulty = request.GET.get('difficulty', '')     # фильтр по сложности
-    time_max = request.GET.get('time_max', '')         # макс. время
-    sort = request.GET.get('sort', 'new')              # сортировка
+    query = request.GET.get('q', '').strip()
+    name = request.GET.get('name', '').strip()
+    category_id = request.GET.get('category', '')
+    difficulty = request.GET.get('difficulty', '')
+    time_max = request.GET.get('time_max', '')
+    all_ingredients = bool(query) and request.GET.get('all') == '1'
+    default_sort = 'match' if query else 'new'
+    orderings = {
+        'new': ('-created_at', '-pk'),
+        'rating': ('-catalog_rating', '-created_at', '-pk'),
+        'likes': ('-catalog_likes', '-created_at', '-pk'),
+        'views': ('-views_count', '-created_at', '-pk'),
+        'time_asc': ('cooking_time', '-pk'),
+        'time_desc': ('-cooking_time', '-pk'),
+    }
+    sort = request.GET.get('sort', default_sort)
+    if sort not in orderings and not (sort == 'match' and query):
+        sort = default_sort
 
-    results = []
-    found_ingredients = []
+    recipes = Recipe.objects.annotate(
+        catalog_rating=Avg('ratings__value'),
+        catalog_likes=Count('likes', distinct=True),
+    ).order_by(*orderings.get(sort, orderings['new']))
+    if category_id.isascii() and category_id.isdecimal() and len(category_id) <= 19:
+        category_pk = int(category_id)
+        recipes = recipes.filter(category_id=category_pk) if category_pk < 2**63 else recipes.none()
+    if difficulty in dict(Recipe.DIFFICULTY_CHOICES):
+        recipes = recipes.filter(difficulty=difficulty)
+    if time_max.isascii() and time_max.isdecimal() and len(time_max) <= 10:
+        recipes = recipes.filter(cooking_time__lte=int(time_max))
 
-    # === БАЗА ===
-    recipes = Recipe.objects.select_related('author', 'category').prefetch_related(
-        'ingredients__ingredient', 'likes'
-    ).all()
-
-    # === ТЕКСТОВЫЙ ПОИСК (в Python, т.к. SQLite не умеет icontains для кириллицы) ===
-    if name:
-        name_lower = name.lower()
-        recipes = [r for r in recipes if name_lower in r.title.lower() or name_lower in (r.description or '').lower()]
-
-    # === ФИЛЬТР: КАТЕГОРИЯ ===
-    if category_id and category_id.isdigit():
-        recipes = [r for r in recipes if r.category_id == int(category_id)]
-
-    # === ФИЛЬТР: СЛОЖНОСТЬ ===
-    if difficulty in ('easy', 'medium', 'hard'):
-        recipes = [r for r in recipes if r.difficulty == difficulty]
-
-    # === ФИЛЬТР: ВРЕМЯ ===
-    if time_max and time_max.isdigit():
-        recipes = [r for r in recipes if r.cooking_time <= int(time_max)]
-
-    # === ПОИСК ПО ИНГРЕДИЕНТАМ ===
+    found_ingredients, unknown_ingredients = {}, {}
     if query:
-        raw_items = query.replace(',', ' ').split()
-        user_ingredients = [item.strip().lower() for item in raw_items if len(item.strip()) >= 2]
+        found_ingredients, unknown_ingredients = match_ingredients(query)
+        if found_ingredients:
+            matched_recipes = RecipeIngredient.objects.filter(
+                ingredient_id__in=found_ingredients
+            ).values('recipe_id')
+            recipes = recipes.filter(pk__in=matched_recipes).prefetch_related('ingredients__ingredient')
+        else:
+            recipes = recipes.none()
 
-        if user_ingredients:
-            all_ingredients = list(Ingredient.objects.all())
+    # SQLite's case-insensitive lookup does not handle Cyrillic.
+    if name:
+        term = normalize(name)
+        recipes = [recipe for recipe in recipes if term in normalize(recipe.title)
+                   or term in normalize(recipe.description)]
 
-            for item in user_ingredients:
-                root = item[:4] if len(item) > 4 else item
-                for ing in all_ingredients:
-                    if root in ing.name.lower() and ing not in found_ingredients:
-                        found_ingredients.append(ing)
+    if query and found_ingredients:
+        matches = []
+        for recipe in recipes:
+            ingredients = {row.ingredient_id: row.ingredient.name for row in recipe.ingredients.all()}
+            missing = [label for pk, label in ingredients.items() if pk not in found_ingredients]
+            if all_ingredients and missing:
+                continue
+            recipe.total_count = len(ingredients)
+            recipe.matched_count = recipe.total_count - len(missing)
+            recipe.match_ratio = recipe.matched_count / recipe.total_count
+            recipe.match_percent = min(99, round(100 * recipe.match_ratio)) if missing else 100
+            recipe.missing = missing
+            matches.append(recipe)
+        recipes = matches
+        if sort == 'match':
+            recipes.sort(key=lambda recipe: (recipe.match_ratio, recipe.matched_count), reverse=True)
 
-            found_ids = {ing.id for ing in found_ingredients}
-
-            if found_ids:
-                # Оставляем только рецепты, где есть хотя бы один ингредиент
-                recipes = [r for r in recipes if any(
-                    ri.ingredient_id in found_ids for ri in r.ingredients.all()
-                )]
-
-                # Считаем совпадения
-                for recipe in recipes:
-                    recipe_ings = list(recipe.ingredients.all())
-                    recipe_ing_ids = {ri.ingredient_id for ri in recipe_ings}
-                    matched = len(recipe_ing_ids & found_ids)
-                    total = len(recipe_ings)
-
-                    recipe.match_percent = round((matched / total) * 100) if total else 0
-                    recipe.matched_count = matched
-                    recipe.total_count = total
-
-                    missing_ids = recipe_ing_ids - found_ids
-                    recipe.missing = [ri.ingredient.name for ri in recipe_ings if ri.ingredient_id in missing_ids][:5]
-            else:
-                recipes = []
-
-    # === СОРТИРОВКА ===
-    if sort == 'rating':
-        recipes = sorted(recipes, key=lambda r: r.average_rating(), reverse=True)
-    elif sort == 'likes':
-        recipes = sorted(recipes, key=lambda r: r.likes.count(), reverse=True)
-    elif sort == 'views':
-        recipes = sorted(recipes, key=lambda r: r.views_count, reverse=True)
-    elif sort == 'time_asc':
-        recipes = sorted(recipes, key=lambda r: r.cooking_time)
-    elif sort == 'time_desc':
-        recipes = sorted(recipes, key=lambda r: r.cooking_time, reverse=True)
-    elif sort == 'match' and query:
-        recipes = sorted(recipes, key=lambda r: getattr(r, 'match_percent', 0), reverse=True)
-    else:  # 'new'
-        recipes = sorted(recipes, key=lambda r: r.created_at, reverse=True)
-
-    # === ПАГИНАЦИЯ ===
     paginator = Paginator(recipes, 12)
-    page_number = request.GET.get('page', 1)
-    page_obj = paginator.get_page(page_number)
-
-    # Список категорий для фильтра
-    categories = Category.objects.all()
-
-    return render(request, 'recipes/search.html', {
+    filters_open = any([name, category_id, difficulty, time_max, sort != default_sort])
+    return _render_section(request, 'recipes/search.html', 'catalog_results', {
         'query': query,
         'name': name,
         'selected_category': category_id,
         'selected_difficulty': difficulty,
         'time_max': time_max,
         'sort': sort,
-        'found_ingredients': found_ingredients,
-        'page_obj': page_obj,
-        'results_count': len(recipes),
-        'categories': categories,
-        'has_filters': any([query, name, category_id, difficulty, time_max]),
+        'all_ingredients': all_ingredients,
+        'found_ingredients': found_ingredients.values(),
+        'unknown_ingredients': unknown_ingredients,
+        'ingredient_suggestions': ingredient_suggestions(),
+        'page_obj': paginator.get_page(request.GET.get('page')),
+        'results_count': paginator.count,
+        'categories': Category.objects.all(),
+        'filters_open': filters_open,
+        'has_filters': bool(query) or filters_open,
     })

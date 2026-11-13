@@ -1,0 +1,90 @@
+{% extends 'recipes/base.html' %}
+{% block title %}Достижения {{ profile_user.username }} — FoodStash{% endblock %}
+
+{% block content %}
+<div class="container achievements-page">
+    <a class="achievements-back" href="{% url 'profile' profile_user.username %}">
+        <span aria-hidden="true">←</span> К профилю {{ profile_user.username }}
+    </a>
+
+    <header class="achievements-hero">
+        <div class="achievements-hero__intro">
+            <div class="achievements-medal achievements-medal--hero" aria-hidden="true"><span>🏆</span></div>
+            <div>
+                <h1>Достижения</h1>
+                <p>{% if is_own %}Твоя коллекция наград FoodStash{% else %}Коллекция {{ profile_user.username }}{% endif %}</p>
+            </div>
+        </div>
+        <div class="achievements-hero__score">
+            {% if is_own and collection.total %}
+                <p><strong>{{ collection.earned_count }}</strong> из {{ collection.total }} получено</p>
+                <progress class="achievement-progress" value="{{ collection.earned_count }}" max="{{ collection.total }}" aria-label="Получено наград"></progress>
+            {% else %}
+                <p><strong>{{ collection.earned_count }}</strong> получено</p>
+            {% endif %}
+        </div>
+    </header>
+
+    {% if collection.next_goal %}
+        {% with goal=collection.next_goal %}
+        <a class="achievements-next" href="#achievement-{{ goal.achievement.pk }}">
+            {% include 'recipes/includes/achievement_medal.html' with card=goal only %}
+            <span class="achievements-next__text">
+                <span>Ближайшая награда</span>
+                <strong>{{ goal.achievement.name }}</strong>
+            </span>
+            <span class="achievements-next__count">{{ goal.progress }} / {{ goal.target }} <span aria-hidden="true">↗</span></span>
+        </a>
+        {% endwith %}
+    {% endif %}
+
+    {% if collection.groups %}
+        <nav class="achievements-nav" aria-label="Разделы достижений">
+            {% for group in collection.groups %}
+                <a href="#achievements-{{ group.key }}">{{ group.name }}</a>
+            {% endfor %}
+        </nav>
+        {% for group in collection.groups %}
+            <section class="achievements-group" id="achievements-{{ group.key }}" aria-labelledby="heading-{{ group.key }}">
+                <div class="achievements-group__heading">
+                    <h2 id="heading-{{ group.key }}">{{ group.name }}</h2>
+                    {% if is_own %}<span>{{ group.earned }} / {{ group.total }}</span>{% endif %}
+                </div>
+                <ul class="achievements-grid">
+                    {% for card in group.cards %}
+                        <li id="achievement-{{ card.achievement.pk }}" class="achievement-card{% if card.earned_at %} achievement-card--earned{% endif %}">
+                            {% include 'recipes/includes/achievement_medal.html' with card=card only %}
+                            <div class="achievement-card__body">
+                                <p class="achievement-card__tier">{{ card.tier_label }}</p>
+                                <h3 id="title-{{ card.achievement.pk }}">{{ card.achievement.name }}</h3>
+                                <p class="achievement-card__description">{{ card.achievement.description }}</p>
+                            </div>
+                            {% if card.earned_at %}
+                                <p class="achievement-card__earned">
+                                    <span aria-hidden="true">✓</span> Получено <time datetime="{{ card.earned_at|date:'Y-m-d' }}">{{ card.earned_at|date:'d.m.Y' }}</time>
+                                </p>
+                            {% else %}
+                                <div class="achievement-card__progress">
+                                    <progress class="achievement-progress" value="{{ card.progress }}" max="{{ card.target }}" aria-labelledby="title-{{ card.achievement.pk }}"></progress>
+                                    <span aria-hidden="true">{{ card.progress }} / {{ card.target }}</span>
+                                </div>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                    {% if group.secret_count %}
+                        <li class="achievement-card achievement-card--secret">
+                            <div class="achievements-medal achievements-medal--locked" aria-hidden="true"><span>?</span></div>
+                            <div class="achievement-card__body">
+                                <h3>Секретные награды</h3>
+                                <p class="achievement-card__description">Условия откроются после получения.</p>
+                            </div>
+                        </li>
+                    {% endif %}
+                </ul>
+            </section>
+        {% endfor %}
+    {% else %}
+        <div class="achievements-empty">Здесь появятся полученные награды.</div>
+    {% endif %}
+</div>
+{% endblock %}

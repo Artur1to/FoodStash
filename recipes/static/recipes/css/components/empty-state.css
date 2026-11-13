@@ -4,17 +4,17 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 80px 24px;
+    padding: clamp(28px, 5vw, 54px) 20px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
+    grid-column: 1 / -1;
 }
 
 .empty-state__icon {
-    font-size: 64px;
-    margin-bottom: 16px;
-    opacity: 0.6;
+    font-size: 40px;
+    margin-bottom: 10px;
 }
 
 .empty-state__title {
@@ -26,7 +26,7 @@
 .empty-state__text {
     font-size: 15px;
     color: var(--text-muted);
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     max-width: 400px;
 }
 

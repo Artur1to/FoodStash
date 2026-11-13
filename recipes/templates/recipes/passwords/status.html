@@ -1,0 +1,13 @@
+{% extends 'recipes/base.html' %}
+{% block title %}{{ title }} — FoodStash{% endblock %}
+{% block header_search %}{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <h1 class="auth-title">{{ title }}</h1>
+        {% if description %}<p class="auth-description">{{ description }}</p>{% endif %}
+        <a class="btn btn--primary btn--full" href="{% url action_route %}">{{ action_label }}</a>
+    </div>
+</div>
+{% endblock %}

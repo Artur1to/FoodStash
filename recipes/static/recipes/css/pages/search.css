@@ -1,70 +1,82 @@
 /* ===== ПОИСК И ПОИСКОВЫЕ ФОРМЫ ===== */
 
-/* Крупная форма поиска (используется на главной и на странице поиска) */
-.hero-search,
-.search-form {
+.catalog {
+    padding-top: 32px;
+}
+
+.catalog > .page-title {
+    margin-bottom: 18px;
+}
+
+.catalog-filters {
+    margin-bottom: 24px;
+}
+
+.catalog-filters__search {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.catalog-hint {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.search-suggestions {
     display: flex;
-    gap: 12px;
-    max-width: 640px;
-    margin: 0 auto 24px;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
-.hero-search__input,
-.search-form__input {
-    flex: 1;
-    height: 56px;
-    padding: 0 24px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--bg-card);
+.catalog-filters__all {
+    width: fit-content;
+    min-height: 44px;
+    font-size: 14px;
     color: var(--text);
-    font-size: 16px;
-    font-family: inherit;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.2s;
 }
 
-.hero-search__input:focus,
-.search-form__input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 4px var(--primary-soft);
+.catalog-filters__all input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-text);
 }
 
-.hero-search .btn,
-.search-form .btn {
-    height: 56px;
-    padding: 0 32px;
-    border-radius: var(--radius-lg);
-    font-size: 15px;
+.catalog-filters__details {
+    margin-top: 12px;
+    border-top: 1px solid var(--border);
 }
 
-/* Страница поиска */
-.search-page {
-    padding: 60px 0 40px;
-    text-align: center;
+.catalog-filters__details .filters__row {
+    padding-bottom: 12px;
+}
+
+.catalog-filters__reset {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    font-size: 14px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 /* Результаты поиска */
 .search-results-header {
-    margin: 40px 0 24px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border);
+    margin: 24px 0 16px;
 }
 
 .search-results-title {
+    scroll-margin-top: 145px;
     font-size: 24px;
     font-weight: 700;
     margin-bottom: 12px;
 }
 
 .search-results-title span {
-    color: var(--primary);
-}
-
-.search-results-subtitle {
-    font-size: 15px;
-    color: var(--text-muted);
+    color: var(--accent-text);
 }
 
 .search-found {
@@ -73,6 +85,7 @@
     gap: 8px;
     align-items: center;
     font-size: 14px;
+    margin-bottom: 8px;
 }
 
 .search-found__label {
@@ -82,15 +95,10 @@
 .search-found__item {
     padding: 4px 12px;
     background: var(--primary-soft);
-    color: var(--primary);
+    color: var(--accent-text);
     border-radius: 100px;
     font-size: 13px;
     font-weight: 500;
-}
-
-/* Карточка рецепта в поиске */
-.recipe-card--search {
-    position: relative;
 }
 
 /* Прогресс-бар совпадения ингредиентов */
@@ -122,7 +130,7 @@
 /* Недостающие ингредиенты */
 .recipe-missing {
     font-size: 12px;
-    color: var(--text-light);
+    color: var(--text-muted);
     line-height: 1.4;
     padding: 8px 10px;
     background: var(--bg);
@@ -132,43 +140,51 @@
     text-align: left;
 }
 
-.recipe-missing__label {
+.recipe-missing strong {
     font-weight: 600;
     color: var(--text-muted);
     margin-right: 4px;
 }
 
-.recipe-missing__more {
-    color: var(--text-light);
+.catalog .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.catalog .pagination a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
 }
 
 /* Адаптив для поиска */
-@media (max-width: 900px) {
-    .hero-search {
-        flex-direction: column;
+@media (max-width: 500px) {
+    .catalog {
+        padding-top: 20px;
     }
 
-    .hero-search__input,
-    .hero-search .btn {
-        width: 100%;
-    }
-}
-
-@media (max-width: 700px) {
-    .search-page {
-        padding: 40px 0 24px;
-    }
-
-    .search-form {
-        flex-direction: column;
-    }
-
-    .search-form__input,
-    .search-form .btn {
-        width: 100%;
+    .catalog-filters__search .btn {
+        padding-inline: 12px;
     }
 
     .search-results-title {
         font-size: 20px;
+    }
+
+    .catalog-filters {
+        padding: 14px;
+    }
+
+    .catalog-filters__details .form-input {
+        padding-left: 10px;
     }
 }

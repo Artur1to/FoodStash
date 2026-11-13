@@ -2,17 +2,25 @@
 
 /* Светлая тема (по умолчанию) */
 :root {
-    --bg: #f7f6f3;
-    --bg-card: #ffffff;
-    --bg-input: #ffffff;
-    --text: #1a1a1a;
-    --text-muted: #6b6b6b;
-    --text-light: #9a9a9a;
-    --border: #ececec;
-    --primary: #ff7a3d;
-    --primary-hover: #f06a2d;
-    --primary-soft: #fff3ec;
-    --green: #4caf50;
+    --bg: #f8f5f0;
+    --bg-card: #fffdfa;
+    --bg-input: #fffdfa;
+    --text: #241b15;
+    --text-muted: #625950;
+    --text-light: #6e6259;
+    --border: #e7ded4;
+    --control-border: #81766d;
+    --primary: #ff834e;
+    --primary-hover: #f37740;
+    --on-primary: #291409;
+    --primary-soft: #fbece3;
+    --accent-text: #a43e1d;
+    --rating: #805409;
+    --positive: #2e6847;
+    --positive-soft: #eaf2e8;
+    --danger: #a73232;
+    --danger-soft: #fae9e7;
+    --highlight-border: #dcb79f;
     --radius-sm: 10px;
     --radius: 16px;
     --radius-lg: 24px;
@@ -30,17 +38,24 @@
 /* Тёмная тема */
 html.dark,
 body.dark {
-    --bg: #121214;
-    --bg-card: #1c1c20;
-    --bg-input: #232328;
-    --text: #f0f0f4;
-    --text-muted: #a2a2ae;
-    --text-light: #72727e;
-    --border: #2c2c34;
-    --primary: #ff7a3d;
-    --primary-hover: #ff915c;
-    --primary-soft: #38241c;
-    --green: #4caf50;
+    color-scheme: dark;
+    --bg: #171411;
+    --bg-card: #211c19;
+    --bg-input: #28211d;
+    --text: #f5eee8;
+    --text-muted: #bcb0a7;
+    --text-light: #a3988f;
+    --border: #3b3028;
+    --control-border: #8b7e73;
+    --primary-hover: #ff9a70;
+    --primary-soft: #44271c;
+    --accent-text: #ffab83;
+    --rating: #f3c878;
+    --positive: #a3daa8;
+    --positive-soft: #233829;
+    --danger: #ffada6;
+    --danger-soft: #422627;
+    --highlight-border: #78513b;
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
     --shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
     --shadow-lg: 0 10px 32px rgba(0, 0, 0, 0.6);

@@ -1,18 +1,17 @@
 {% extends 'recipes/base.html' %}
+{% load l10n %}
 {% block title %}{{ recipe.title }} — FoodStash{% endblock %}
 
 {% block content %}
 <div class="container">
 
     <!-- ХЛЕБНЫЕ КРОШКИ -->
-    <nav class="breadcrumbs">
-        <a href="/">Главная</a>
-        <span>/</span>
+    <nav class="breadcrumbs" aria-label="Путь к рецепту">
+        <a href="{% url 'search_recipes' %}">Каталог</a>
         {% if recipe.category %}
-            <a href="/category/{{ recipe.category.slug }}/">{{ recipe.category.name }}</a>
-            <span>/</span>
+            <span aria-hidden="true">/</span>
+            <a href="{% url 'category_detail' recipe.category.slug %}">{{ recipe.category.name }}</a>
         {% endif %}
-        <span class="breadcrumbs__current">{{ recipe.title }}</span>
     </nav>
 
     <!-- ОСНОВНОЙ БЛОК -->
@@ -29,14 +28,14 @@
 
         <!-- ПРАВАЯ КОЛОНКА: ИНФО -->
         <div class="recipe-detail__info">
+            <h1 class="recipe-detail__title">{{ recipe.title }}</h1>
+
             <div class="recipe-detail__badges">
                 {% if recipe.category %}
                     <span class="badge badge--category">{{ recipe.category.name }}</span>
                 {% endif %}
                 <span class="badge badge--difficulty">{{ recipe.get_difficulty_display }}</span>
             </div>
-
-            <h1 class="recipe-detail__title">{{ recipe.title }}</h1>
 
             <!-- РЕЙТИНГ СО ЗВЁЗДАМИ -->
             <div class="recipe-rating" id="ratingWidget" data-url="{% url 'rate_recipe' recipe.id %}" data-user-rating="{{ user_rating }}">
@@ -45,15 +44,16 @@
                         <button type="button"
                                 class="star-btn {% if user_rating >= forloop.counter %}active{% endif %}"
                                 data-value="{{ forloop.counter }}"
+                                aria-pressed="{% if user_rating == forloop.counter %}true{% else %}false{% endif %}"
                                 title="Поставить {{ forloop.counter }} из 5">★</button>
                     {% endfor %}
                 </div>
                 <div class="rating-info">
-                    <span class="rating-score" id="avgRatingScore">{{ avg_rating|default:"0.0" }}</span>
+                    <span class="rating-score" id="avgRatingScore">{{ avg_rating|floatformat:1 }}</span>
                     <span class="rating-count" id="ratingsCountText">({{ ratings_count }})</span>
                 </div>
                 <div class="rating-hint" id="ratingHintText">
-                    {% if user_rating %}Твоя оценка: {{ user_rating }} ★{% else %}{% if user.is_authenticated %}Нажми на звезду, чтобы оценить{% else %}<a href="{% url 'login' %}?next={{ request.path }}">Войдите</a>, чтобы оценить{% endif %}{% endif %}
+                    {% if user_rating %}Твоя оценка: {{ user_rating }} ★{% elif user.is_authenticated %}Нажми на звезду, чтобы оценить{% else %}<a href="{% url 'login' %}?next={{ request.path|urlencode }}">Войди</a>, чтобы оценить{% endif %}
                 </div>
             </div>
 
@@ -73,7 +73,7 @@
                 <div class="recipe-meta__item">
                     <div class="recipe-meta__icon">🍽</div>
                     <div>
-                        <div class="recipe-meta__value" id="metaServingsValue">{{ recipe.servings }}</div>
+                        <div class="recipe-meta__value" id="metaServingsValue">{{ servings }}</div>
                         <div class="recipe-meta__label">Порций</div>
                     </div>
                 </div>
@@ -103,22 +103,28 @@
 
             <!-- КНОПКИ -->
             <div class="recipe-actions">
-                <button class="btn btn--primary {% if is_liked %}btn--liked{% endif %}"
+                <button type="button" class="btn btn--outline {% if is_liked %}btn--liked{% endif %}"
                         id="likeBtn"
+                        aria-label="Нравится"
+                        aria-pressed="{{ is_liked|yesno:'true,false' }}"
                         data-url="{% url 'toggle_like' recipe.id %}">
-                    <span id="likeIcon">{% if is_liked %}❤️{% else %}🤍{% endif %}</span>
+                    <span id="likeIcon" aria-hidden="true">{% if is_liked %}♥{% else %}♡{% endif %}</span>
                     <span id="likeCount">{{ likes_count }}</span>
                 </button>
 
-                <button class="btn btn--outline {% if is_favorite %}btn--favorited{% endif %}"
+                <button type="button" class="btn btn--outline {% if is_favorite %}btn--favorited{% endif %}"
                         id="favBtn"
+                        aria-pressed="{{ is_favorite|yesno:'true,false' }}"
                         data-url="{% url 'toggle_favorite' recipe.id %}">
-                    <span id="favIcon">{% if is_favorite %}⭐{% else %}☆{% endif %}</span>
+                    <span id="favIcon" aria-hidden="true">{% if is_favorite %}★{% else %}☆{% endif %}</span>
                     <span id="favText">{% if is_favorite %}В избранном{% else %}В избранное{% endif %}</span>
                 </button>
+                {% if user.pk == recipe.author_id %}
+                    <a href="{% url 'recipe_edit' recipe.slug %}" class="btn btn--outline">Редактировать рецепт</a>
+                {% endif %}
             </div>
 
-            <p class="recipe-detail__date">Добавлено {{ recipe.created_at|date:"d F Y" }}</p>
+            <p class="recipe-detail__date">Добавлено {{ recipe.created_at|date:"j E Y" }}</p>
         </div>
     </div>
 
@@ -130,16 +136,16 @@
             <h2 class="recipe-section-title">Ингредиенты</h2>
             <div class="servings-control">
                 <span>Порций:</span>
-                <button type="button" class="servings-btn" data-action="minus">−</button>
-                <span class="servings-value" id="servingsValue">{{ recipe.servings }}</span>
-                <button type="button" class="servings-btn" data-action="plus">+</button>
+                <button type="button" class="servings-btn" data-action="minus" aria-label="Уменьшить число порций" {% if servings == 1 %}disabled{% endif %}>−</button>
+                <span class="servings-value" id="servingsValue" aria-live="polite">{{ servings }}</span>
+                <button type="button" class="servings-btn" data-action="plus" aria-label="Увеличить число порций" {% if servings >= 20 %}disabled{% endif %}>+</button>
             </div>
 
-            <ul class="ingredients-list" id="ingredientsList" data-base-servings="{{ recipe.servings }}">
+            <ul class="ingredients-list" id="ingredientsList" data-base-servings="{{ servings|unlocalize }}">
                 {% for ri in ingredients %}
                     <li class="ingredients-list__item">
                         <span class="ingredients-list__name">{{ ri.ingredient.name }}</span>
-                        <span class="ingredients-list__qty" data-qty="{{ ri.quantity }}">{{ ri.quantity }} {{ ri.ingredient.unit }}</span>
+                        <span class="ingredients-list__qty"><span data-qty="{{ ri.quantity|unlocalize }}">{{ ri.quantity|floatformat:"-2" }}</span> {{ ri.ingredient.unit }}</span>
                     </li>
                 {% empty %}
                     <li class="empty-text">Ингредиенты не указаны</li>
@@ -147,37 +153,21 @@
             </ul>
 
             <!-- КБЖУ ВИДЖЕТ -->
-            {% if recipe.calories or recipe.proteins or recipe.fats or recipe.carbs %}
-                <div class="nutrition-box" id="nutritionBox" data-base-servings="{{ recipe.servings }}">
+            {% if nutrition %}
+                <div class="nutrition-box">
                     <div class="nutrition-box__header">
                         <span class="nutrition-box__title">⚡ КБЖУ</span>
-                        <span class="nutrition-box__badge">на <span id="kbjuServingsText">{{ recipe.servings }}</span> порц.</span>
+                        <span class="nutrition-box__badge">на <span id="kbjuServingsText">{{ servings }}</span> порц.</span>
                     </div>
                     <div class="nutrition-grid">
-                        <div class="nutrition-pill">
-                            <span class="nutrition-pill__val" id="valCalories" data-base="{{ recipe.calories|default:0 }}">
-                                {{ recipe.calories|default:"—" }}
-                            </span>
-                            <span class="nutrition-pill__lbl">ккал</span>
-                        </div>
-                        <div class="nutrition-pill">
-                            <span class="nutrition-pill__val" id="valProteins" data-base="{{ recipe.proteins|default:0 }}">
-                                {{ recipe.proteins|default:"—" }}
-                            </span>
-                            <span class="nutrition-pill__lbl">белки (г)</span>
-                        </div>
-                        <div class="nutrition-pill">
-                            <span class="nutrition-pill__val" id="valFats" data-base="{{ recipe.fats|default:0 }}">
-                                {{ recipe.fats|default:"—" }}
-                            </span>
-                            <span class="nutrition-pill__lbl">жиры (г)</span>
-                        </div>
-                        <div class="nutrition-pill">
-                            <span class="nutrition-pill__val" id="valCarbs" data-base="{{ recipe.carbs|default:0 }}">
-                                {{ recipe.carbs|default:"—" }}
-                            </span>
-                            <span class="nutrition-pill__lbl">углеводы (г)</span>
-                        </div>
+                        {% for label, per_serving, total in nutrition %}
+                            <div class="nutrition-pill">
+                                <span class="nutrition-pill__val" {% if per_serving is not None %}data-per-serving="{{ per_serving|unlocalize }}"{% endif %}>
+                                    {{ total|default_if_none:"—" }}
+                                </span>
+                                <span class="nutrition-pill__lbl">{{ label }}</span>
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
             {% endif %}
@@ -202,31 +192,34 @@
     </div>
 
     <!-- КОММЕНТАРИИ -->
-    <section class="comments-section">
-        <div class="comments-header">
+    {% partialdef comments inline %}
+    <section class="comments-section" id="recipe-comments" data-ajax-page>
+        <div class="comments-header" data-ajax-region="sort">
             <h2 class="recipe-section-title">Комментарии ({{ comments_count }})</h2>
 
             <div class="comments-sort">
-                <a href="?sort=date" class="sort-btn {% if sort == 'date' %}active{% endif %}">Новые</a>
-                <a href="?sort=likes" class="sort-btn {% if sort == 'likes' %}active{% endif %}">Популярные</a>
+                <a href="?sort=date" data-ajax-link class="sort-btn {% if sort == 'date' %}active{% endif %}"{% if sort == 'date' %} aria-current="true"{% endif %}>Новые</a>
+                <a href="?sort=likes" data-ajax-link class="sort-btn {% if sort == 'likes' %}active{% endif %}"{% if sort == 'likes' %} aria-current="true"{% endif %}>Популярные</a>
             </div>
         </div>
 
-        {% if user.is_authenticated %}
-            <form method="post" action="{% url 'add_comment' recipe.id %}" class="comment-form">
-                {% csrf_token %}
-                <div class="form-group">
-                    <textarea name="content" rows="3" placeholder="Оставь комментарий или совет..." class="form-input" required></textarea>
-                </div>
-                <button type="submit" class="btn btn--primary" style="margin-top:12px;">Отправить</button>
-            </form>
-        {% else %}
-            <p class="empty-text">
-                <a href="{% url 'login' %}?next={{ request.path }}">Войди</a>, чтобы оставить комментарий.
-            </p>
+        {% if show_comment_form %}
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'add_comment' recipe.id %}" class="comment-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <textarea name="content" rows="3" aria-label="Комментарий" placeholder="Оставь комментарий или совет" class="form-input" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn--primary">Отправить</button>
+                </form>
+            {% else %}
+                <p class="comments-sign-in">
+                    <a href="{% url 'login' %}?next={{ request.path }}">Войди</a>, чтобы оставить комментарий.
+                </p>
+            {% endif %}
         {% endif %}
 
-        <div class="comments-list">
+        <div class="comments-list" data-ajax-region="list">
             {% for item in comments_data %}
                 <div class="comment-item" id="comment-{{ item.comment.id }}">
                     <div class="comment-item__avatar">
@@ -248,14 +241,18 @@
 
                         <!-- ГОЛОСОВАНИЕ -->
                         <div class="comment-votes">
-                            <button class="vote-btn vote-btn--like {% if item.user_vote == 'like' %}active{% endif %}"
+                            <button type="button" class="vote-btn vote-btn--like {% if item.user_vote == 'like' %}active{% endif %}"
                                     data-url="{% url 'vote_comment' item.comment.id %}"
+                                    aria-label="Поддержать комментарий"
+                                    aria-pressed="{% if item.user_vote == 'like' %}true{% else %}false{% endif %}"
                                     data-vote="like">
                                 👍 <span class="vote-count">{{ item.likes }}</span>
                             </button>
 
-                            <button class="vote-btn vote-btn--dislike {% if item.user_vote == 'dislike' %}active{% endif %}"
+                            <button type="button" class="vote-btn vote-btn--dislike {% if item.user_vote == 'dislike' %}active{% endif %}"
                                     data-url="{% url 'vote_comment' item.comment.id %}"
+                                    aria-label="Оценить комментарий отрицательно"
+                                    aria-pressed="{% if item.user_vote == 'dislike' %}true{% else %}false{% endif %}"
                                     data-vote="dislike">
                                 👎 <span class="vote-count">{{ item.dislikes }}</span>
                             </button>
@@ -267,6 +264,7 @@
             {% endfor %}
         </div>
     </section>
+    {% endpartialdef %}
 
 </div>
 
@@ -278,44 +276,36 @@ const ingredientsList = document.getElementById('ingredientsList');
 const kbjuServingsText = document.getElementById('kbjuServingsText');
 
 if (servingsValue && ingredientsList) {
-    const baseServings = parseInt(ingredientsList.dataset.baseServings) || 1;
+    const baseServings = Number(ingredientsList.dataset.baseServings);
     let currentServings = baseServings;
-
-    document.querySelectorAll('.servings-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const action = btn.dataset.action;
-            if (action === 'plus' && currentServings < 20) currentServings++;
-            if (action === 'minus' && currentServings > 1) currentServings--;
-
-            servingsValue.textContent = currentServings;
-            if (metaServingsValue) metaServingsValue.textContent = currentServings;
-            if (kbjuServingsText) kbjuServingsText.textContent = currentServings;
-
-            const ratio = currentServings / baseServings;
-
-            // Пересчёт ингредиентов
-            document.querySelectorAll('.ingredients-list__qty').forEach(el => {
-                const baseQty = parseFloat(el.dataset.qty);
-                if (!isNaN(baseQty)) {
-                    const newQty = (baseQty * ratio).toFixed(1).replace(/\.0$/, '');
-                    const unit = el.textContent.replace(/[\d.,\s]+/, '');
-                    el.textContent = newQty + ' ' + unit;
-                }
-            });
-
-            // Пересчёт КБЖУ
-            ['valCalories', 'valProteins', 'valFats', 'valCarbs'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    const base = parseFloat(el.dataset.base);
-                    if (base > 0) {
-                        const newVal = (base * ratio).toFixed(id === 'valCalories' ? 0 : 1).replace(/\.0$/, '');
-                        el.textContent = newVal;
-                    }
-                }
-            });
-        });
+    const minus = document.querySelector('.servings-btn[data-action="minus"]');
+    const plus = document.querySelector('.servings-btn[data-action="plus"]');
+    const quantities = ingredientsList.querySelectorAll('[data-qty]');
+    const nutritionValues = document.querySelectorAll('[data-per-serving]');
+    const formatAmount = new Intl.NumberFormat(document.documentElement.lang, {
+        maximumFractionDigits: 2,
+        useGrouping: false,
     });
+
+    function changeServings(delta) {
+        currentServings += delta;
+        servingsValue.textContent = currentServings;
+        metaServingsValue.textContent = currentServings;
+        if (kbjuServingsText) kbjuServingsText.textContent = currentServings;
+        minus.disabled = currentServings === 1;
+        plus.disabled = currentServings >= 20;
+
+        const ratio = currentServings / baseServings;
+        for (const quantity of quantities) {
+            quantity.textContent = formatAmount.format(Number(quantity.dataset.qty) * ratio);
+        }
+        for (const value of nutritionValues) {
+            value.textContent = formatAmount.format(Number(value.dataset.perServing) * currentServings);
+        }
+    }
+
+    minus.addEventListener('click', () => changeServings(-1));
+    plus.addEventListener('click', () => changeServings(1));
 }
 
 // === CSRF для AJAX ===
@@ -339,6 +329,7 @@ if (ratingWidget) {
         starBtns.forEach(btn => {
             const val = parseInt(btn.dataset.value);
             btn.classList.toggle('active', val <= activeCount);
+            btn.setAttribute('aria-pressed', String(val === activeCount));
             btn.classList.toggle('hovered', false);
         });
     }
@@ -373,12 +364,17 @@ if (ratingWidget) {
                     return;
                 }
 
+                if (!response.ok) return;
                 const data = await response.json();
+                document.dispatchEvent(new CustomEvent('foodstash:awards', {detail: data.awards}));
                 if (data.status === 'ok') {
                     savedRating = data.user_rating;
                     ratingWidget.dataset.userRating = savedRating;
                     renderStars(savedRating);
-                    if (avgScoreEl) avgScoreEl.textContent = data.avg_rating;
+                    if (avgScoreEl) avgScoreEl.textContent = data.avg_rating.toLocaleString(document.documentElement.lang, {
+                        minimumFractionDigits: 1,
+                        maximumFractionDigits: 1,
+                    });
                     if (countEl) countEl.textContent = `(${data.ratings_count})`;
                     if (hintEl) hintEl.textContent = `Твоя оценка: ${savedRating} ★`;
                 }
@@ -410,18 +406,20 @@ if (likeBtn) {
             return;
         }
 
+        if (!response.ok) return;
         const data = await response.json();
         const icon = document.getElementById('likeIcon');
         const count = document.getElementById('likeCount');
 
         if (data.status === 'added') {
-            icon.textContent = '❤️';
+            icon.textContent = '♥';
             likeBtn.classList.add('btn--liked');
         } else {
-            icon.textContent = '🤍';
+            icon.textContent = '♡';
             likeBtn.classList.remove('btn--liked');
         }
         count.textContent = data.count;
+        likeBtn.setAttribute('aria-pressed', String(data.status === 'added'));
     });
 }
 
@@ -440,12 +438,13 @@ if (favBtn) {
             return;
         }
 
+        if (!response.ok) return;
         const data = await response.json();
         const icon = document.getElementById('favIcon');
         const text = document.getElementById('favText');
 
         if (data.status === 'added') {
-            icon.textContent = '⭐';
+            icon.textContent = '★';
             text.textContent = 'В избранном';
             favBtn.classList.add('btn--favorited');
         } else {
@@ -453,61 +452,50 @@ if (favBtn) {
             text.textContent = 'В избранное';
             favBtn.classList.remove('btn--favorited');
         }
+        favBtn.setAttribute('aria-pressed', String(data.status === 'added'));
     });
 }
 
 // === Голосование за комментарии ===
-document.querySelectorAll('.vote-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-        const url = btn.dataset.url;
-        const voteType = btn.dataset.vote;
-        const commentItem = btn.closest('.comment-item');
+document.getElementById('recipe-comments').addEventListener('click', async event => {
+    const btn = event.target.closest('.vote-btn');
+    if (!btn) return;
 
-        const formData = new FormData();
-        formData.append('vote_type', voteType);
+    const url = btn.dataset.url;
+    const voteType = btn.dataset.vote;
+    const commentId = btn.closest('.comment-item').id;
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
-            body: formData,
-        });
+    const formData = new FormData();
+    formData.append('vote_type', voteType);
 
-        if (response.status === 401) {
-            window.location.href = '/login/?next=' + window.location.pathname;
-            return;
-        }
-
-        const data = await response.json();
-
-        commentItem.querySelector('.vote-btn--like .vote-count').textContent = data.likes;
-        commentItem.querySelector('.vote-btn--dislike .vote-count').textContent = data.dislikes;
-
-        const likeBtn = commentItem.querySelector('.vote-btn--like');
-        const dislikeBtn = commentItem.querySelector('.vote-btn--dislike');
-
-        likeBtn.classList.toggle('active', data.user_vote === 'like');
-        dislikeBtn.classList.toggle('active', data.user_vote === 'dislike');
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken')},
+        body: formData,
     });
+
+    if (response.status === 401) {
+        window.location.href = '/login/?next=' + window.location.pathname;
+        return;
+    }
+
+    if (!response.ok) return;
+    const data = await response.json();
+
+    document.dispatchEvent(new CustomEvent('foodstash:awards', {detail: data.awards}));
+    const commentItem = document.getElementById(commentId);
+    if (!commentItem) return;
+    commentItem.querySelector('.vote-btn--like .vote-count').textContent = data.likes;
+    commentItem.querySelector('.vote-btn--dislike .vote-count').textContent = data.dislikes;
+
+    const likeBtn = commentItem.querySelector('.vote-btn--like');
+    const dislikeBtn = commentItem.querySelector('.vote-btn--dislike');
+
+    likeBtn.classList.toggle('active', data.user_vote === 'like');
+    dislikeBtn.classList.toggle('active', data.user_vote === 'dislike');
+    likeBtn.setAttribute('aria-pressed', String(data.user_vote === 'like'));
+    dislikeBtn.setAttribute('aria-pressed', String(data.user_vote === 'dislike'));
 });
 
-// === ТОСТЫ АЧИВОК ===
-{% if new_achievements_toast %}
-const achievementToast = document.createElement('div');
-achievementToast.className = 'achievement-toast';
-
-let toastContent = '<div class="achievement-toast__title">🏆 Новая ачивка!</div>';
-{% for ach in new_achievements_toast %}
-toastContent += '<div class="achievement-toast__item">{{ ach.icon }} <strong>{{ ach.name }}</strong> — {{ ach.description }}</div>';
-{% endfor %}
-
-achievementToast.innerHTML = toastContent;
-document.body.appendChild(achievementToast);
-
-setTimeout(() => achievementToast.classList.add('show'), 100);
-setTimeout(() => {
-    achievementToast.classList.remove('show');
-    setTimeout(() => achievementToast.remove(), 300);
-}, 6000);
-{% endif %}
 </script>
 {% endblock %}

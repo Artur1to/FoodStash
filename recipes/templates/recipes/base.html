@@ -1,4 +1,4 @@
-{% load static %}
+{% load static achievement_tags %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -9,7 +9,10 @@
     <!-- Моментальная инициализация темы до рендеринга для предотвращения мерцания -->
     <script>
         (function() {
-            const savedTheme = localStorage.getItem('foodstash_theme');
+            let savedTheme;
+            try {
+                savedTheme = localStorage.getItem('foodstash_theme');
+            } catch {}
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
                 document.documentElement.classList.add('dark');
@@ -18,49 +21,38 @@
     </script>
 
     <link rel="stylesheet" href="{% static 'recipes/css/style.css' %}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <header class="header">
     <div class="container header__inner">
-        <a href="/" class="logo">
-            <span class="logo__icon">🍳</span>
+        <a href="{% url 'home' %}" class="logo">
+            <span class="logo__icon" aria-hidden="true">🍳</span>
             <span class="logo__text">FoodStash</span>
         </a>
 
-        <form action="{% url 'search_recipes' %}" method="get" class="header-search">
-            <input type="text" name="q" placeholder="Курица, картошка, лук..." class="header-search__input" value="{{ query|default:'' }}">
+        {% block header_search %}
+        <form action="{% url 'search_recipes' %}" method="get" class="header-search" role="search">
+            <input type="search" name="q" aria-label="Найти по продуктам" placeholder="Картофель, лук..." class="header-search__input" value="{{ query|default:'' }}">
             <button type="submit" class="header-search__btn">Найти</button>
         </form>
+        {% endblock %}
 
-        <nav class="header__nav">
-            <a href="{% url 'random_recipe' %}" class="header__link header__link--random" title="Случайный рецепт">🎲 Случайный</a>
-            {% if user.is_authenticated %}
-                <a href="{% url 'feed' %}" class="header__link">Лента</a>
-            {% endif %}
-            <a href="{% url 'leaderboard' %}" class="header__link">Лидеры</a>
-            <a href="{% url 'category_list' %}" class="header__link">Категории</a>
-            
-            {% if user.is_authenticated %}
-                <a href="{% url 'profile' user.username %}" class="header__link nick-{{ user.nickname_style }}">{{ user.username }}</a>
-                <form action="{% url 'logout' %}" method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="header__link header__link--muted" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:14px;">Выйти</button>
-                </form>
-            {% else %}
-                <a href="{% url 'login' %}" class="header__link">Войти</a>
-                <a href="{% url 'register' %}" class="btn btn--primary btn--sm">Регистрация</a>
-            {% endif %}
-
-            <!-- ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ -->
+        <div class="header__controls">
+            <nav class="header__nav" aria-label="Основное меню">
+                {% include 'recipes/includes/navigation.html' %}
+            </nav>
+            <details class="header-menu">
+                <summary>Меню</summary>
+                <nav class="header-menu__links" aria-label="Основное меню">
+                    {% include 'recipes/includes/navigation.html' %}
+                </nav>
+            </details>
             <button type="button" class="theme-toggle" id="themeToggleBtn" aria-label="Переключить тему" title="Светлая / Тёмная тема">
-                <span class="theme-toggle__icon theme-toggle__icon--moon">🌙</span>
-                <span class="theme-toggle__icon theme-toggle__icon--sun">☀️</span>
+                <span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">🌙</span>
+                <span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">☀️</span>
             </button>
-        </nav>
+        </div>
     </div>
 </header>
 
@@ -68,35 +60,35 @@
     {% block content %}{% endblock %}
 </main>
 
-<footer class="footer">
-    <div class="container footer__inner">
-        <div class="footer__col">
-            <div class="logo logo--sm">
-                <span class="logo__icon">🍳</span>
-                <span class="logo__text">FoodStash</span>
-            </div>
-            <p class="footer__desc">Рецепты из того, что есть у тебя дома</p>
-        </div>
-        <div class="footer__col">
-            <h4 class="footer__title">Разделы</h4>
-            <a href="/" class="footer__link">Главная</a>
-            <a href="{% url 'category_list' %}" class="footer__link">Все категории</a>
-            <a href="{% url 'search_recipes' %}" class="footer__link">Поиск по ингредиентам</a>
-            <a href="{% url 'random_recipe' %}" class="footer__link">🎲 Случайный рецепт</a>
-        </div>
-        <div class="footer__col">
-            <h4 class="footer__title">О проекте</h4>
-            <a href="#" class="footer__link">Правила</a>
-            <a href="#" class="footer__link">Контакты</a>
-            <a href="#" class="footer__link">Помощь</a>
-        </div>
+{% include 'recipes/includes/footer.html' %}
+
+<aside class="cookie-notice" aria-labelledby="cookie-notice-title" hidden data-cookie-notice>
+    <div>
+        <h2 id="cookie-notice-title">Файлы cookie</h2>
+        <p>FoodStash использует cookie для входа и защиты форм. <a href="{% url 'cookies' %}">Подробнее</a></p>
     </div>
-    <div class="footer__bottom">
-        <div class="container">
-            <p>© 2026 FoodStash. Сделано с душой и Django.</p>
+    <button type="button" class="btn btn--primary" data-dismiss-cookie-notice>Понятно</button>
+</aside>
+<script src="{% static 'recipes/js/cookie-notice.js' %}" defer></script>
+<script src="{% static 'recipes/js/section-navigation.js' %}" defer></script>
+
+{% if user.is_authenticated %}
+    {% achievement_notifications request as new_awards %}
+    <aside class="achievement-toast" aria-label="Новые достижения" data-award-toast{% if not new_awards %} hidden{% endif %}>
+        <div>
+            <p class="achievement-toast__title">Новые достижения</p>
+            <ul data-award-list>
+                {% for award in new_awards %}
+                    <li><span aria-hidden="true">{{ award.achievement.icon }}</span> {{ award.achievement.name }}</li>
+                {% endfor %}
+            </ul>
         </div>
-    </div>
-</footer>
+        <button class="achievement-toast__close" type="button" aria-label="Закрыть уведомление" data-award-close>×</button>
+        <a href="{% url 'profile_achievements' user.username %}">К коллекции <span aria-hidden="true">→</span></a>
+    </aside>
+    <div class="achievement-announcement" role="status" data-award-announcement></div>
+    <script src="{% static 'recipes/js/achievements.js' %}" defer></script>
+{% endif %}
 
 <script>
 // Переключатель светлой и тёмной темы
@@ -105,13 +97,26 @@ if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
         const isDark = document.documentElement.classList.toggle('dark');
         document.body.classList.toggle('dark', isDark);
-        localStorage.setItem('foodstash_theme', isDark ? 'dark' : 'light');
+        try {
+            localStorage.setItem('foodstash_theme', isDark ? 'dark' : 'light');
+        } catch {}
     });
 }
 // Синхронизируем класс на body при загрузке DOM
 if (document.documentElement.classList.contains('dark')) {
     document.body.classList.add('dark');
 }
+
+const headerMenu = document.querySelector('.header-menu');
+document.addEventListener('click', event => {
+    if (headerMenu.open && !headerMenu.contains(event.target)) headerMenu.open = false;
+});
+headerMenu.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && headerMenu.open) {
+        headerMenu.open = false;
+        headerMenu.querySelector('summary').focus();
+    }
+});
 </script>
 
 </body>

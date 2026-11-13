@@ -1,31 +1,71 @@
 {% extends 'recipes/base.html' %}
-{% block title %}Редактирование профиля{% endblock %}
+{% load static %}
+{% block title %}Редактирование профиля — FoodStash{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="auth-page">
-        <div class="auth-card auth-card--wide">
-            <h1 class="auth-title">Редактировать профиль</h1>
+<div class="container form-page profile-edit">
+    <header class="form-page__header">
+        <a href="{% url 'profile' user.username %}" class="form-page__back">
+            <span aria-hidden="true">←</span> К профилю
+        </a>
+        <h1 class="page-title">Редактирование профиля</h1>
+    </header>
 
-            <form method="post" enctype="multipart/form-data" class="auth-form">
-                {% csrf_token %}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
 
-                {% for field in form %}
-                    <div class="form-group">
-                        <label class="form-label">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.errors %}
-                            <div class="form-error">{{ field.errors.0 }}</div>
-                        {% endif %}
+        <div class="profile-edit__layout">
+            <section class="form-page__panel" aria-labelledby="profile-edit-details">
+                <h2 class="form-page__section-title" id="profile-edit-details">Личные данные</h2>
+                <div class="profile-edit__fields">
+                    <div class="profile-edit__names">
+                        {% include 'recipes/includes/form_field.html' with field=form.first_name only %}
+                        {% include 'recipes/includes/form_field.html' with field=form.last_name only %}
                     </div>
-                {% endfor %}
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn--primary">Сохранить</button>
-                    <a href="{% url 'profile' user.username %}" class="btn btn--outline">Отмена</a>
+                    {% include 'recipes/includes/form_field.html' with field=form.email only %}
+                    {% include 'recipes/includes/form_field.html' with field=form.bio only %}
                 </div>
-            </form>
+            </section>
+
+            <section class="form-page__panel" aria-labelledby="profile-edit-appearance">
+                <h2 class="form-page__section-title" id="profile-edit-appearance">Оформление профиля</h2>
+
+                {% with avatar=form.avatar.value banner=form.banner.value %}
+                    <figure class="profile-edit__preview" aria-label="Предпросмотр оформления профиля">
+                        <div class="profile-edit__preview-banner">
+                            <img alt="" data-profile-preview="banner" {% if banner %}src="{{ banner.url }}"{% else %}hidden{% endif %}>
+                        </div>
+                        <div class="profile-edit__preview-identity">
+                            <div class="profile-edit__preview-avatar">
+                                <img alt="" data-profile-preview="avatar" {% if avatar %}src="{{ avatar.url }}"{% else %}hidden{% endif %}>
+                                <span aria-hidden="true">{{ user.username|first|upper }}</span>
+                            </div>
+                            <span class="profile-edit__preview-name nick-{% if form.nickname_style.errors %}default{% else %}{{ form.nickname_style.value|default:'default' }}{% endif %}"
+                                  data-profile-nickname>{{ user.username }}</span>
+                        </div>
+                    </figure>
+                {% endwith %}
+
+                <div class="profile-edit__media">
+                    {% include 'recipes/includes/form_field.html' with field=form.avatar reselect=form.files.avatar only %}
+                    {% include 'recipes/includes/form_field.html' with field=form.banner reselect=form.files.banner only %}
+                </div>
+                {% include 'recipes/includes/form_field.html' with field=form.nickname_style only %}
+            </section>
         </div>
-    </div>
+
+        <div class="form-page__actions">
+            <a href="{% url 'profile' user.username %}" class="btn btn--outline">Отмена</a>
+            <button type="submit" class="btn btn--primary">Сохранить</button>
+        </div>
+    </form>
+
+    <section class="form-page__panel profile-edit__security" aria-labelledby="profile-edit-security">
+        <h2 id="profile-edit-security" class="form-page__section-title">Безопасность</h2>
+        <a href="{% url 'password_change' %}" class="btn btn--outline">Сменить пароль</a>
+    </section>
 </div>
+
+<script src="{% static 'recipes/js/profile-edit.js' %}" defer></script>
 {% endblock %}

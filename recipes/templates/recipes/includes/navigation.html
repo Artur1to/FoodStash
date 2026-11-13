@@ -1,0 +1,19 @@
+{% with route=request.resolver_match.url_name %}
+<a href="{% url 'search_recipes' %}" class="header__link"{% if route == 'search_recipes' %} aria-current="page"{% endif %}>Рецепты</a>
+<a href="{% url 'category_list' %}" class="header__link"{% if route == 'category_list' or route == 'category_detail' %} aria-current="{% if route == 'category_list' %}page{% else %}true{% endif %}"{% endif %}>Категории</a>
+<a href="{% url 'random_recipe' %}" class="header__link">Случайный рецепт</a>
+<a href="{% url 'leaderboard' %}" class="header__link"{% if route == 'leaderboard' %} aria-current="page"{% endif %}>Лидеры</a>
+{% if user.is_authenticated %}
+    <a href="{% url 'feed' %}" class="header__link"{% if route == 'feed' %} aria-current="page"{% endif %}>Лента</a>
+    <a href="{% url 'profile' user.username %}" class="header__link header__account" title="{{ user.username }}">
+        <span class="nick-{{ user.nickname_style }}">{{ user.username }}</span>
+    </a>
+    <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="header__link header__logout">Выйти</button>
+    </form>
+{% else %}
+    <a href="{% url 'login' %}" class="header__link"{% if route == 'login' %} aria-current="page"{% endif %}>Войти</a>
+    <a href="{% url 'register' %}" class="header__link"{% if route == 'register' %} aria-current="page"{% endif %}>Регистрация</a>
+{% endif %}
+{% endwith %}

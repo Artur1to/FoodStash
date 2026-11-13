@@ -1,34 +1,37 @@
 {% extends 'recipes/base.html' %}
+{% load recipe_categories %}
 {% block title %}{{ category.name }} — FoodStash{% endblock %}
 
 {% block content %}
 <div class="container">
 
-    <nav class="breadcrumbs">
-        <a href="/">Главная</a>
-        <span>/</span>
+    <nav class="breadcrumbs" aria-label="Путь к разделу">
+        <a href="{% url 'home' %}">Главная</a>
+        <span aria-hidden="true">/</span>
         <a href="{% url 'category_list' %}">Категории</a>
-        <span>/</span>
-        <span class="breadcrumbs__current">{{ category.name }}</span>
     </nav>
 
+    {% partialdef category_results inline %}
+    <div id="category-results" data-ajax-page data-ajax-region>
     <!-- ЗАГОЛОВОК КАТЕГОРИИ -->
     <div class="category-header">
-        <div class="category-header__icon">{{ category.icon|default:"🍽️" }}</div>
+        <div class="category-header__icon" aria-hidden="true">{{ category|category_icon }}</div>
         <div>
             <h1 class="category-header__title">{{ category.name }}</h1>
             <p class="category-header__count">
-                Всего рецептов: {{ recipes|length }}
+                Рецептов: {{ recipes|length }}
             </p>
         </div>
     </div>
 
     <!-- УМНЫЕ ФИЛЬТРЫ И СОРТИРОВКА -->
-    <form method="get" class="filters" id="categoryFiltersForm">
+    <details class="filters category-filters" id="category-filters"{% if has_filters %} open{% endif %}>
+        <summary class="filters__summary">Фильтры и сортировка</summary>
+        <form method="get" class="category-filters__form" data-ajax-form>
         <div class="filters__row">
             <div class="filters__item">
-                <label class="filters__label">Сложность</label>
-                <select name="difficulty" class="form-input" onchange="document.getElementById('categoryFiltersForm').submit();">
+                <label for="category-difficulty" class="filters__label">Сложность</label>
+                <select id="category-difficulty" name="difficulty" class="form-input">
                     <option value="">Любая сложность</option>
                     <option value="easy" {% if selected_difficulty == 'easy' %}selected{% endif %}>Легко</option>
                     <option value="medium" {% if selected_difficulty == 'medium' %}selected{% endif %}>Средне</option>
@@ -37,13 +40,13 @@
             </div>
 
             <div class="filters__item">
-                <label class="filters__label">Время готовки, до (мин)</label>
-                <input type="number" name="time_max" min="1" max="999" class="form-input" value="{{ time_max }}" placeholder="например: 30" onchange="document.getElementById('categoryFiltersForm').submit();">
+                <label for="category-time" class="filters__label">Время готовки, до (мин)</label>
+                <input id="category-time" type="number" name="time_max" min="1" max="999" class="form-input" value="{{ time_max }}" placeholder="30">
             </div>
 
             <div class="filters__item">
-                <label class="filters__label">Сортировка</label>
-                <select name="sort" class="form-input" onchange="document.getElementById('categoryFiltersForm').submit();">
+                <label for="category-sort" class="filters__label">Сортировка</label>
+                <select id="category-sort" name="sort" class="form-input">
                     <option value="new" {% if sort == 'new' %}selected{% endif %}>Сначала новые</option>
                     <option value="rating" {% if sort == 'rating' %}selected{% endif %}>По рейтингу ★</option>
                     <option value="likes" {% if sort == 'likes' %}selected{% endif %}>По лайкам ❤️</option>
@@ -53,39 +56,21 @@
                 </select>
             </div>
 
-            {% if has_filters %}
-                <div class="filters__item filters__item--btn">
-                    <a href="{% url 'category_detail' category.slug %}" class="btn btn--outline">Сбросить фильтры</a>
-                </div>
-            {% endif %}
+            <div class="filters__item filters__item--btn">
+                <button type="submit" class="btn btn--primary" id="category-apply">Применить</button>
+                {% if has_filters %}
+                    <a href="{% url 'category_detail' category.slug %}" class="btn btn--outline" data-ajax-link>Сбросить фильтры</a>
+                {% endif %}
+            </div>
         </div>
-    </form>
+        </form>
+    </details>
 
     <!-- СЕТКА РЕЦЕПТОВ -->
     {% if recipes %}
         <div class="recipes-grid">
             {% for recipe in recipes %}
-                <a href="{% url 'recipe_detail' recipe.slug %}" class="recipe-card">
-                    <div class="recipe-card__image">
-                        {% if recipe.image %}
-                            <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}">
-                        {% else %}
-                            <div class="recipe-card__placeholder">🍲</div>
-                        {% endif %}
-                    </div>
-                    <div class="recipe-card__body">
-                        <h3 class="recipe-card__title">{{ recipe.title }}</h3>
-                        <p class="recipe-card__desc">{{ recipe.description|truncatewords:12 }}</p>
-                        <div class="recipe-card__meta">
-                            <span>⏱ {{ recipe.cooking_time }} мин</span>
-                            {% if recipe.average_rating %}
-                                <span style="color:#f59e0b;font-weight:600;">★ {{ recipe.average_rating }}</span>
-                            {% endif %}
-                            <span>❤️ {{ recipe.likes.count }}</span>
-                            <span>👤 <span class="nick-{{ recipe.author.nickname_style }}">{{ recipe.author.username }}</span></span>
-                        </div>
-                    </div>
-                </a>
+                {% include 'recipes/includes/recipe_card.html' with recipe=recipe rating=recipe.average_rating likes=recipe.likes.count show_author=True only %}
             {% endfor %}
         </div>
     {% else %}
@@ -100,12 +85,14 @@
                 {% endif %}
             </p>
             {% if has_filters %}
-                <a href="{% url 'category_detail' category.slug %}" class="btn btn--outline">Сбросить фильтры</a>
+                <a href="{% url 'category_detail' category.slug %}" class="btn btn--outline" data-ajax-link>Сбросить фильтры</a>
             {% else %}
                 <a href="/recipe/add/" class="btn btn--primary">Добавить рецепт</a>
             {% endif %}
         </div>
     {% endif %}
+    </div>
+    {% endpartialdef %}
 
 </div>
 {% endblock %}

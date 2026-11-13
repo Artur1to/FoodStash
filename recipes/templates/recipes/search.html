@@ -1,199 +1,143 @@
 {% extends 'recipes/base.html' %}
-{% block title %}Поиск рецептов — FoodStash{% endblock %}
+{% block title %}Каталог рецептов — FoodStash{% endblock %}
+{% block header_search %}{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container catalog">
+    <h1 class="page-title">Каталог рецептов</h1>
 
-    <!-- ПОИСК -->
-    <div class="search-page">
-        <h1 class="page-title">Поиск рецептов</h1>
-        <p class="page-subtitle">Введи ингредиенты, название или выбери фильтры</p>
-
-        <form action="{% url 'search_recipes' %}" method="get" class="search-form">
-            <input type="text" name="q" placeholder="Ингредиенты: курица, картошка, лук..." class="search-form__input" value="{{ query }}" autofocus>
-            <button type="submit" class="btn btn--primary btn--lg">Найти</button>
-        </form>
-
-        <div class="search-tags">
-            <span class="tag-label">Популярное:</span>
-            <a href="?q=курица" class="tag">курица</a>
-            <a href="?q=картошка" class="tag">картошка</a>
-            <a href="?q=яйца" class="tag">яйца</a>
-            <a href="?q=сыр" class="tag">сыр</a>
-            <a href="?q=макароны" class="tag">макароны</a>
+    {% partialdef catalog_results inline %}
+    <div id="catalog-results" data-ajax-page data-ajax-region>
+    <form method="get" action="{% url 'search_recipes' %}" class="filters catalog-filters" data-ajax-form>
+        <label for="catalog-products" class="form-label">Какие продукты есть?</label>
+        <div class="catalog-filters__search">
+            <input type="search" id="catalog-products" name="q" class="form-input" value="{{ query }}"
+                   placeholder="Например, картофель, лук" aria-describedby="catalog-products-hint">
+            <button type="submit" class="btn btn--primary" id="catalog-search">Найти</button>
         </div>
-    </div>
+        <p id="catalog-products-hint" class="catalog-hint">Разделяй названия продуктов запятыми.</p>
+        {% include 'recipes/includes/ingredient_suggestions.html' with suggestions=ingredient_suggestions catalog=True only %}
 
-    <!-- ФИЛЬТРЫ -->
-    <form method="get" action="{% url 'search_recipes' %}" class="filters">
-        <input type="hidden" name="q" value="{{ query }}">
-        <input type="hidden" name="sort" value="{{ sort }}">
+        {% if query %}
+            <label class="checkbox-label catalog-filters__all">
+                <input type="checkbox" name="all" value="1" {% if all_ingredients %}checked{% endif %}>
+                Все продукты есть
+            </label>
+        {% endif %}
 
-        <div class="filters__row">
-            <div class="filters__item">
-                <label class="filters__label">Название</label>
-                <input type="text" name="name" placeholder="Например: борщ" class="form-input" value="{{ name }}">
+        <details class="catalog-filters__details" id="catalog-filters" {% if filters_open %}open{% endif %}>
+            <summary class="filters__summary">Фильтры и сортировка</summary>
+            <div class="filters__row">
+                <div class="filters__item">
+                    <label for="catalog-name" class="filters__label">Название</label>
+                    <input type="search" id="catalog-name" name="name" class="form-input" value="{{ name }}">
+                </div>
+                <div class="filters__item">
+                    <label for="catalog-category" class="filters__label">Категория</label>
+                    <select id="catalog-category" name="category" class="form-input">
+                        <option value="">Все категории</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:'s' %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filters__item">
+                    <label for="catalog-difficulty" class="filters__label">Сложность</label>
+                    <select id="catalog-difficulty" name="difficulty" class="form-input">
+                        <option value="">Любая</option>
+                        <option value="easy" {% if selected_difficulty == 'easy' %}selected{% endif %}>Легко</option>
+                        <option value="medium" {% if selected_difficulty == 'medium' %}selected{% endif %}>Средне</option>
+                        <option value="hard" {% if selected_difficulty == 'hard' %}selected{% endif %}>Сложно</option>
+                    </select>
+                </div>
+                <div class="filters__item">
+                    <label for="catalog-time" class="filters__label">Время, до (мин)</label>
+                    <input type="number" id="catalog-time" name="time_max" min="1" max="999" class="form-input" value="{{ time_max }}" placeholder="60">
+                </div>
+                <div class="filters__item">
+                    <label for="catalog-sort" class="filters__label">Сортировка</label>
+                    <select id="catalog-sort" name="sort" class="form-input">
+                        <option value="" {% if sort == 'match' or not query and sort == 'new' %}selected{% endif %}>{% if query %}По совпадению{% else %}Сначала новые{% endif %}</option>
+                        {% if query %}
+                            <option value="new" {% if sort == 'new' %}selected{% endif %}>Сначала новые</option>
+                        {% endif %}
+                        <option value="rating" {% if sort == 'rating' %}selected{% endif %}>По рейтингу</option>
+                        <option value="likes" {% if sort == 'likes' %}selected{% endif %}>По лайкам</option>
+                        <option value="views" {% if sort == 'views' %}selected{% endif %}>По просмотрам</option>
+                        <option value="time_asc" {% if sort == 'time_asc' %}selected{% endif %}>Сначала быстрые</option>
+                        <option value="time_desc" {% if sort == 'time_desc' %}selected{% endif %}>Сначала долгие</option>
+                    </select>
+                </div>
+                <div class="filters__item filters__item--btn">
+                    <button type="submit" class="btn btn--primary" id="catalog-apply">Применить</button>
+                </div>
             </div>
-
-            <div class="filters__item">
-                <label class="filters__label">Категория</label>
-                <select name="category" class="form-input">
-                    <option value="">Все категории</option>
-                    {% for cat in categories %}
-                        <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:'s' %}selected{% endif %}>
-                            {{ cat.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="filters__item">
-                <label class="filters__label">Сложность</label>
-                <select name="difficulty" class="form-input">
-                    <option value="">Любая</option>
-                    <option value="easy" {% if selected_difficulty == 'easy' %}selected{% endif %}>Легко</option>
-                    <option value="medium" {% if selected_difficulty == 'medium' %}selected{% endif %}>Средне</option>
-                    <option value="hard" {% if selected_difficulty == 'hard' %}selected{% endif %}>Сложно</option>
-                </select>
-            </div>
-
-            <div class="filters__item">
-                <label class="filters__label">Время, до (мин)</label>
-                <input type="number" name="time_max" min="1" max="999" class="form-input" value="{{ time_max }}" placeholder="60">
-            </div>
-
-            <div class="filters__item filters__item--btn">
-                <button type="submit" class="btn btn--primary">Применить</button>
-                {% if has_filters %}
-                    <a href="{% url 'search_recipes' %}" class="btn btn--outline">Сбросить</a>
-                {% endif %}
-            </div>
-        </div>
+        </details>
+        {% if has_filters %}
+            <a href="{% url 'search_recipes' %}" class="catalog-filters__reset" data-ajax-link>Сбросить поиск и фильтры</a>
+        {% endif %}
     </form>
 
-    <!-- РЕЗУЛЬТАТЫ -->
-    {% if has_filters %}
-        <div class="search-results-header">
-            <div>
-                <h2 class="search-results-title">
-                    {% if results_count > 0 %}
-                        Найдено: <span>{{ results_count }}</span> рецептов
-                    {% else %}
-                        Ничего не найдено
-                    {% endif %}
-                </h2>
-
-                {% if found_ingredients %}
-                    <div class="search-found">
-                        <span class="search-found__label">Распознаны:</span>
-                        {% for ing in found_ingredients %}
-                            <span class="search-found__item">{{ ing.name }}</span>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-
-            <!-- СОРТИРОВКА -->
-            <form method="get" class="sort-form" id="sortForm">
-                <input type="hidden" name="q" value="{{ query }}">
-                <input type="hidden" name="name" value="{{ name }}">
-                <input type="hidden" name="category" value="{{ selected_category }}">
-                <input type="hidden" name="difficulty" value="{{ selected_difficulty }}">
-                <input type="hidden" name="time_max" value="{{ time_max }}">
-
-                <label class="sort-label">Сортировка:</label>
-                <select name="sort" class="form-input sort-select" onchange="document.getElementById('sortForm').submit();">
-                    <option value="new" {% if sort == 'new' %}selected{% endif %}>Сначала новые</option>
-                    {% if query %}
-                        <option value="match" {% if sort == 'match' %}selected{% endif %}>По совпадению</option>
-                    {% endif %}
-                    <option value="rating" {% if sort == 'rating' %}selected{% endif %}>По рейтингу ★</option>
-                    <option value="likes" {% if sort == 'likes' %}selected{% endif %}>По лайкам ❤️</option>
-                    <option value="views" {% if sort == 'views' %}selected{% endif %}>По просмотрам 👁</option>
-                    <option value="time_asc" {% if sort == 'time_asc' %}selected{% endif %}>Быстрее (время ↑)</option>
-                    <option value="time_desc" {% if sort == 'time_desc' %}selected{% endif %}>Дольше (время ↓)</option>
-                </select>
-            </form>
-        </div>
-
-        {% if page_obj.object_list %}
-            <div class="recipes-grid">
-                {% for recipe in page_obj %}
-                    <a href="{% url 'recipe_detail' recipe.slug %}" class="recipe-card recipe-card--search">
-                        <div class="recipe-card__image">
-                            {% if recipe.image %}
-                                <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}">
-                            {% else %}
-                                <div class="recipe-card__placeholder">🍲</div>
-                            {% endif %}
-
-                            {% if recipe.match_percent %}
-                                <div class="match-badge {% if recipe.match_percent >= 80 %}match-badge--high{% elif recipe.match_percent >= 50 %}match-badge--medium{% else %}match-badge--low{% endif %}">
-                                    {{ recipe.match_percent }}%
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="recipe-card__body">
-                            <h3 class="recipe-card__title">{{ recipe.title }}</h3>
-                            <p class="recipe-card__desc">{{ recipe.description|truncatewords:12 }}</p>
-
-                            {% if recipe.match_percent %}
-                                <div class="recipe-match">
-                                    <div class="recipe-match__bar">
-                                        <div class="recipe-match__fill" style="width: {{ recipe.match_percent }}%;"></div>
-                                    </div>
-                                    <div class="recipe-match__text">
-                                        {{ recipe.matched_count }} из {{ recipe.total_count }} ингредиентов
-                                    </div>
-                                </div>
-
-                                {% if recipe.missing %}
-                                    <div class="recipe-missing">
-                                        <span class="recipe-missing__label">Не хватает:</span>
-                                        {{ recipe.missing|join:", " }}
-                                    </div>
-                                {% endif %}
-                            {% endif %}
-
-                            <div class="recipe-card__meta">
-                                <span>⏱ {{ recipe.cooking_time }} мин</span>
-                                {% if recipe.average_rating %}
-                                    <span style="color:#f59e0b;font-weight:600;">★ {{ recipe.average_rating }}</span>
-                                {% endif %}
-                                <span>❤️ {{ recipe.likes.count }}</span>
-                            </div>
-                        </div>
-                    </a>
+    <div class="search-results-header">
+        <h2 class="search-results-title" id="catalog-results-title" tabindex="-1">
+            {% if has_filters %}Результаты поиска{% else %}Все рецепты{% endif %}
+            <span>({{ results_count }})</span>
+        </h2>
+        {% if query %}
+            <p class="catalog-hint">
+                {% if sort == 'match' and results_count %}Сначала рецепты с наибольшим совпадением.{% endif %}
+                {% if not found_ingredients and not unknown_ingredients %}Введи название хотя бы одного продукта.{% endif %}
+            </p>
+        {% endif %}
+        {% if found_ingredients %}
+            <div class="search-found">
+                <span class="search-found__label">Распознаны</span>
+                {% for ing in found_ingredients %}
+                    <span class="search-found__item">{{ ing.name }}</span>
                 {% endfor %}
             </div>
+        {% endif %}
+        {% if unknown_ingredients %}
+            <p class="catalog-hint">Не распознано: {{ unknown_ingredients|join:", " }}</p>
+        {% endif %}
+    </div>
 
-            <!-- ПАГИНАЦИЯ -->
-            {% if page_obj.has_other_pages %}
-                <div class="pagination">
-                    {% if page_obj.has_previous %}
-                        <a href="?q={{ query }}&name={{ name }}&category={{ selected_category }}&difficulty={{ selected_difficulty }}&time_max={{ time_max }}&sort={{ sort }}&page={{ page_obj.previous_page_number }}">← Назад</a>
-                    {% endif %}
+    {% if page_obj.object_list %}
+        <div class="recipes-grid">
+            {% for recipe in page_obj %}
+                {% include 'recipes/includes/recipe_card.html' with recipe=recipe rating=recipe.catalog_rating likes=recipe.catalog_likes catalog=True only %}
+            {% endfor %}
+        </div>
 
-                    <span class="pagination__current">
-                        Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
-                    </span>
+        <!-- ПАГИНАЦИЯ -->
+        {% if page_obj.has_other_pages %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="{% querystring page=page_obj.previous_page_number %}" data-ajax-link data-ajax-focus="catalog-results-title">← Назад</a>
+                {% endif %}
 
-                    {% if page_obj.has_next %}
-                        <a href="?q={{ query }}&name={{ name }}&category={{ selected_category }}&difficulty={{ selected_difficulty }}&time_max={{ time_max }}&sort={{ sort }}&page={{ page_obj.next_page_number }}">Вперед →</a>
-                    {% endif %}
-                </div>
-            {% endif %}
+                <span class="pagination__current">
+                    Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                </span>
 
-        {% else %}
-            <div class="empty-state">
-                <div class="empty-state__icon">🔍</div>
-                <h3 class="empty-state__title">Ничего не найдено</h3>
-                <p class="empty-state__text">Попробуй изменить список ингредиентов или сбросить фильтры.</p>
-                <a href="{% url 'search_recipes' %}" class="btn btn--primary">Сбросить поиск</a>
+                {% if page_obj.has_next %}
+                    <a href="{% querystring page=page_obj.next_page_number %}" data-ajax-link data-ajax-focus="catalog-results-title">Вперед →</a>
+                {% endif %}
             </div>
         {% endif %}
 
+    {% else %}
+        <div class="empty-state">
+            {% if has_filters %}
+                <h3 class="empty-state__title">Ничего не найдено</h3>
+                <p class="empty-state__text">Измени список продуктов или сбрось фильтры.</p>
+                <a href="{% url 'search_recipes' %}" class="btn btn--primary" data-ajax-link>Сбросить поиск</a>
+            {% else %}
+                <h3 class="empty-state__title">В каталоге пока нет рецептов</h3>
+            {% endif %}
+        </div>
     {% endif %}
-
+    </div>
+    {% endpartialdef %}
 </div>
 {% endblock %}

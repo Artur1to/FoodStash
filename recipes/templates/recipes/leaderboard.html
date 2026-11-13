@@ -2,23 +2,24 @@
 {% block title %}Лидеры — FoodStash{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container leaderboard-page">
 
     <div class="page-header">
-        <h1 class="page-title">Зал славы</h1>
-        <p class="page-subtitle">Лучшие авторы FoodStash</p>
+        <h1 class="page-title">Лидеры</h1>
     </div>
 
+    {% partialdef leaderboard_tabs inline %}
+    <div id="leaderboard-results" data-ajax-page data-ajax-region>
     <!-- ВКЛАДКИ -->
     <div class="profile-tabs">
-        <a href="?tab=subscribers" class="profile-tab {% if tab == 'subscribers' %}active{% endif %}">
-            👥 По подписчикам
+        <a href="?tab=subscribers" data-ajax-link class="profile-tab {% if tab == 'subscribers' %}active{% endif %}"{% if tab == 'subscribers' %} aria-current="true"{% endif %}>
+            Подписчики
         </a>
-        <a href="?tab=likes" class="profile-tab {% if tab == 'likes' %}active{% endif %}">
-            ❤️ По лайкам
+        <a href="?tab=likes" data-ajax-link class="profile-tab {% if tab == 'likes' %}active{% endif %}"{% if tab == 'likes' %} aria-current="true"{% endif %}>
+            Лайки
         </a>
-        <a href="?tab=views" class="profile-tab {% if tab == 'views' %}active{% endif %}">
-            👁 По просмотрам
+        <a href="?tab=views" data-ajax-link class="profile-tab {% if tab == 'views' %}active{% endif %}"{% if tab == 'views' %} aria-current="true"{% endif %}>
+            Просмотры
         </a>
     </div>
 
@@ -69,6 +70,8 @@
             <p class="empty-state__text">Будь первым, кто попадёт в зал славы!</p>
         </div>
     {% endif %}
+    </div>
+    {% endpartialdef %}
 
 </div>
 {% endblock %}

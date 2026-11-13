@@ -2,7 +2,7 @@
 {% block title %}{{ profile_user.username }} — FoodStash{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container profile-page">
     <!-- ШАПКА ПРОФИЛЯ С БАННЕРОМ -->
     <div class="profile-header-card">
         <div class="profile-banner" {% if profile_user.banner %}style="background-image: url('{{ profile_user.banner.url }}');"{% endif %}>
@@ -22,52 +22,69 @@
                 {% if profile_user.get_full_name %}
                     <p class="profile-fullname">{{ profile_user.get_full_name }}</p>
                 {% endif %}
-                <p class="profile-joined">На FoodStash с {{ profile_user.date_joined|date:"F Y" }}</p>
+                <p class="profile-joined">На FoodStash с {{ profile_user.date_joined|date:"E Y" }}</p>
 
                 {% if profile_user.bio %}
                     <p class="profile-bio">{{ profile_user.bio }}</p>
                 {% endif %}
 
                 {% if is_own %}
-                    <a href="{% url 'profile_edit' %}" class="btn btn--primary">Редактировать профиль</a>
+                    <div class="profile-actions">
+                        <a href="{% url 'recipe_add' %}" class="btn btn--primary">Добавить рецепт</a>
+                        <a href="{% url 'profile_edit' %}" class="btn btn--outline">Редактировать профиль</a>
+                    </div>
                 {% endif %}
-                {% if not is_own %}
-                    <button class="btn {% if is_subscribed %}btn--outline{% else %}btn--primary{% endif %}"
+                {% if not is_own and user.is_authenticated %}
+                    <button type="button" class="btn profile-subscribe {% if is_subscribed %}btn--outline{% else %}btn--primary{% endif %}"
                             id="subscribeBtn"
+                            aria-pressed="{{ is_subscribed|yesno:'true,false' }}"
                             data-url="{% url 'toggle_subscription' profile_user.username %}">
-                        <span id="subIcon">{% if is_subscribed %}✓{% else %}+{% endif %}</span>
+                        <span id="subIcon" aria-hidden="true">{% if is_subscribed %}✓{% else %}+{% endif %}</span>
                         <span id="subText">{% if is_subscribed %}Вы подписаны{% else %}Подписаться{% endif %}</span>
-                        <span id="subCount">{{ subscribers_count }}</span>
+                        <span id="subCount" class="profile-subscribe__count" aria-label="Подписчиков">{{ subscribers_count }}</span>
                     </button>
+                {% elif not is_own %}
+                    <a href="{% url 'login' %}?next={{ request.path|urlencode }}" class="btn btn--primary profile-subscribe">
+                        Подписаться <span class="profile-subscribe__count" aria-label="Подписчиков">{{ subscribers_count }}</span>
+                    </a>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    {% if user_achievements %}
-    <div class="profile-achievements">
-        <h3 class="profile-achievements__title">🏆 Достижения ({{ user_achievements.count }})</h3>
-        <div class="achievements-grid">
-            {% for ua in user_achievements %}
-                <div class="achievement-card" title="{{ ua.achievement.description }}">
-                    <div class="achievement-card__icon">{{ ua.achievement.icon }}</div>
-                    <div class="achievement-card__name">{{ ua.achievement.name }}</div>
-                </div>
-            {% endfor %}
+    {% if is_own or achievement_preview.count %}
+    <section class="achievements-preview" aria-labelledby="profile-achievements-title">
+        <div class="achievements-preview__heading">
+            <h2 id="profile-achievements-title">Достижения <span>{{ achievement_preview.count }}</span></h2>
+            <a href="{% url 'profile_achievements' profile_user.username %}">Вся коллекция <span aria-hidden="true">→</span></a>
         </div>
-    </div>
+        {% if achievement_preview.cards %}
+            <ul class="achievements-preview__list">
+                {% for card in achievement_preview.cards %}
+                    <li>
+                        {% include 'recipes/includes/achievement_medal.html' with card=card only %}
+                        <span>{{ card.achievement.name }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Посмотри, как получить первую награду.</p>
+        {% endif %}
+    </section>
     {% endif %}
 
+    {% partialdef profile_tabs inline %}
+    <div id="profile-recipes" data-ajax-page data-ajax-region>
     <!-- ВКЛАДКИ -->
     <div class="profile-tabs">
-        <a href="?tab=recipes" class="profile-tab {% if tab == 'recipes' %}active{% endif %}">
+        <a href="?tab=recipes" data-ajax-link class="profile-tab {% if tab == 'recipes' %}active{% endif %}"{% if tab == 'recipes' %} aria-current="true"{% endif %}>
             Рецепты <span class="profile-tab__count">{{ counts.recipes }}</span>
         </a>
-        <a href="?tab=likes" class="profile-tab {% if tab == 'likes' %}active{% endif %}">
+        <a href="?tab=likes" data-ajax-link class="profile-tab {% if tab == 'likes' %}active{% endif %}"{% if tab == 'likes' %} aria-current="true"{% endif %}>
             Лайки <span class="profile-tab__count">{{ counts.likes }}</span>
         </a>
         {% if is_own %}
-            <a href="?tab=favorites" class="profile-tab {% if tab == 'favorites' %}active{% endif %}">
+            <a href="?tab=favorites" data-ajax-link class="profile-tab {% if tab == 'favorites' %}active{% endif %}"{% if tab == 'favorites' %} aria-current="true"{% endif %}>
                 Избранное <span class="profile-tab__count">{{ counts.favorites }}</span>
             </a>
         {% endif %}
@@ -76,28 +93,9 @@
     <!-- СПИСОК РЕЦЕПТОВ -->
     <div class="recipes-grid">
         {% for recipe in items %}
-            <a href="{% url 'recipe_detail' recipe.slug %}" class="recipe-card">
-                <div class="recipe-card__image">
-                    {% if recipe.image %}
-                        <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}">
-                    {% else %}
-                        <div class="recipe-card__placeholder">🍲</div>
-                    {% endif %}
-                </div>
-                <div class="recipe-card__body">
-                    <h3 class="recipe-card__title">{{ recipe.title }}</h3>
-                    <p class="recipe-card__desc">{{ recipe.description|truncatewords:12 }}</p>
-                    <div class="recipe-card__meta">
-                        <span>⏱ {{ recipe.cooking_time }} мин</span>
-                        {% if recipe.average_rating %}
-                            <span style="color:#f59e0b;font-weight:600;">★ {{ recipe.average_rating }}</span>
-                        {% endif %}
-                        <span>❤️ {{ recipe.likes.count }}</span>
-                    </div>
-                </div>
-            </a>
+            {% include 'recipes/includes/recipe_card.html' with recipe=recipe rating=recipe.average_rating likes=recipe.likes.count only %}
         {% empty %}
-            <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-state">
                 <div class="empty-state__icon">
                     {% if tab == 'likes' %}❤️{% elif tab == 'favorites' %}⭐{% else %}🍽️{% endif %}
                 </div>
@@ -116,19 +114,18 @@
                             Лайкай рецепты, которые тебе понравились — они появятся здесь.
                         {% elif tab == 'favorites' %}
                             Добавляй рецепты в избранное — они появятся здесь.
-                        {% else %}
+                        {% elif tab == 'recipes' %}
                             Добавь свой первый рецепт!
                         {% endif %}
                     {% else %}
                         Пользователь пока ничего не добавил.
                     {% endif %}
                 </p>
-                {% if is_own and tab == 'recipes' %}
-                    <a href="{% url 'recipe_add' %}" class="btn btn--primary">Добавить рецепт</a>
-                {% endif %}
             </div>
         {% endfor %}
     </div>
+    </div>
+    {% endpartialdef %}
     <script>
     function getCookie(name) {
         const value = `; ${document.cookie}`;
@@ -150,7 +147,9 @@
                 return;
             }
 
+            if (!response.ok) return;
             const data = await response.json();
+            document.dispatchEvent(new CustomEvent('foodstash:awards', {detail: data.awards}));
             const icon = document.getElementById('subIcon');
             const text = document.getElementById('subText');
             const count = document.getElementById('subCount');
@@ -167,6 +166,7 @@
                 subscribeBtn.classList.add('btn--primary');
             }
             count.textContent = data.count;
+            subscribeBtn.setAttribute('aria-pressed', String(data.status === 'added'));
         });
     }
     </script>

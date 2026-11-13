@@ -9,9 +9,11 @@
 /* 2. Общие компоненты */
 @import 'components/header.css';
 @import 'components/footer.css';
+@import 'components/cookie-notice.css';
 @import 'components/buttons.css';
 @import 'components/cards.css';
 @import 'components/forms.css';
+@import 'components/form-page.css';
 @import 'components/badges.css';
 @import 'components/tags.css';
 @import 'components/breadcrumbs.css';
@@ -26,5 +28,8 @@
 @import 'pages/recipe-detail.css';
 @import 'pages/recipe-form.css';
 @import 'pages/profile.css';
+@import 'pages/achievements.css';
+@import 'pages/profile-edit.css';
 @import 'pages/leaderboard.css';
 @import 'pages/search.css';
+@import 'pages/info.css';

@@ -3,23 +3,24 @@
 /* Карточка рецепта */
 .recipes-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
     gap: 24px;
 }
 
 .recipe-card {
     background: var(--bg-card);
     border-radius: var(--radius);
+    border: 1px solid var(--border);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
-    transition: all 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
     display: flex;
     flex-direction: column;
 }
 
 .recipe-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
+    border-color: var(--highlight-border);
+    box-shadow: var(--shadow);
 }
 
 .recipe-card__image {
@@ -29,6 +30,10 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
+}
+
+.recipe-card .recipe-card__image {
+    position: relative;
 }
 
 .recipe-card__image img {
@@ -66,51 +71,63 @@
 
 .recipe-card__meta {
     display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: var(--text-light);
-    margin-top: 8px;
+    flex-wrap: wrap;
+    gap: 5px 12px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: auto;
     padding-top: 8px;
     border-top: 1px solid var(--border);
+}
+
+.recipe-card__rating {
+    color: var(--rating);
+    font-weight: 600;
+}
+
+.recipe-card__author {
+    margin-left: auto;
 }
 
 /* Карточка категории (главная страница) */
 .categories {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
 }
 
 .category-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px 16px;
-    text-align: center;
-    transition: all 0.2s;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 58px;
+    transition: border-color 0.2s, background-color 0.2s;
 }
 
 .category-card:hover {
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow);
+    border-color: var(--highlight-border);
+    background-color: var(--primary-soft);
 }
 
 .category-card__icon {
-    font-size: 32px;
-    margin-bottom: 8px;
+    font-size: 22px;
 }
 
 .category-card__name {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text);
 }
 
 /* Плитка категории (страница всех категорий) */
 .categories-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: 20px;
     padding-bottom: 60px;
 }
@@ -175,7 +192,18 @@
 }
 
 @media (max-width: 500px) {
+    .categories {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .category-card {
+        padding: 8px 10px;
+        min-height: 50px;
+    }
+
     .recipes-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
 }
